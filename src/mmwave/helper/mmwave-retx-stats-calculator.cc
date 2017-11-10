@@ -64,7 +64,7 @@ MmWaveRetxStatsCalculator::GetTypeId (void)
                    MakeStringChecker ())
     .AddAttribute ("RlcDropFilename",
                    "Name of the file where the RX RLC drop results will be saved.",
-                   StringValue ("RlcPktDropsStats.txt"),
+                   StringValue ("RxRlcPktDropsStats.txt"),
                    MakeStringAccessor (&MmWaveRetxStatsCalculator::m_pktDropFilename),
                    MakeStringChecker ())
     ;
