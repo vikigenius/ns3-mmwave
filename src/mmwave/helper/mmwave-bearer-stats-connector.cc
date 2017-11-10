@@ -72,6 +72,14 @@ public:
   uint16_t cellId; //!< cellId
 };
 
+struct MmWaveBoundCallbackArgumentRetx : public SimpleRefCount<MmWaveBoundCallbackArgumentRetx>
+{
+public:
+  Ptr<MmWaveRetxStatsCalculator> stats;  //!< statistics calculator
+  uint64_t imsi; //!< imsi
+  uint16_t cellId; //!< cellId
+};
+
 struct McMmWaveBoundCallbackArgument : public SimpleRefCount<McMmWaveBoundCallbackArgument>
 {
 public:
@@ -144,6 +152,29 @@ UlRxPduCallback (Ptr<MmWaveBoundCallbackArgument> arg, std::string path,
   NS_LOG_FUNCTION (path << rnti << (uint16_t)lcid << packetSize << delay);
  
   arg->stats->UlRxPdu (arg->cellId, arg->imsi, rnti, lcid, packetSize, delay);
+}
+
+void
+DlRetxCallback (Ptr<MmWaveBoundCallbackArgumentRetx> arg, std::string path,
+                 uint16_t rnti, uint8_t lcid, uint32_t packetSize, uint32_t numRetx)
+{
+  NS_LOG_FUNCTION(path << arg->stats << arg->imsi);
+  arg->stats->RegisterRetxDl(arg->imsi, arg->cellId, rnti, lcid, packetSize, numRetx);
+}
+
+void
+UlRetxCallback (Ptr<MmWaveBoundCallbackArgumentRetx> arg, std::string path,
+                 uint16_t rnti, uint8_t lcid, uint32_t packetSize, uint32_t numRetx)
+{
+  NS_LOG_FUNCTION(path << arg->stats << arg->imsi);
+  arg->stats->RegisterRetxUl(arg->imsi, arg->cellId, rnti, lcid, packetSize, numRetx);
+}
+
+void
+RxPktDropCallback (Ptr<MmWaveBoundCallbackArgumentRetx> arg, std::string path, uint16_t rnti, uint8_t lcid, Ptr<const Packet> p)
+{
+  NS_LOG_FUNCTION(path << arg->stats << arg->imsi);
+  arg->stats->RegisterRxDrop(arg->imsi, arg->cellId, rnti, lcid, p);
 }
 
 void
@@ -269,11 +300,20 @@ MmWaveBearerStatsConnector::EnableRlcStats (Ptr<MmWaveBearerStatsCalculator> rlc
 }
 
 void 
+MmWaveBearerStatsConnector::EnableRetxStats (Ptr<MmWaveRetxStatsCalculator> retxStats)
+{
+  m_retxStats = retxStats;
+  EnsureConnected ();
+}
+
+void 
 MmWaveBearerStatsConnector::EnablePdcpStats (Ptr<MmWaveBearerStatsCalculator> pdcpStats)
 {
   m_pdcpStats = pdcpStats;
   EnsureConnected ();
 }
+
+
 
 void
 MmWaveBearerStatsConnector::EnableMcStats (Ptr<McStatsCalculator> mcStats)
@@ -694,6 +734,7 @@ MmWaveBearerStatsConnector::ConnectTracesUe (std::string context, uint64_t imsi,
   NS_LOG_LOGIC (this << "expected context should match /NodeList/*/DeviceList/*/LteUeRrc/");
   std::string basePath = context.substr (0, context.rfind ("/"));
   Config::MatchContainer objects = Config::LookupMatches(basePath + "/DataRadioBearerMap/*/LteRlc/");
+  Config::MatchContainer amobjects = Config::LookupMatches(basePath + "/DataRadioBearerMap/*/LteRlc/$ns3::LteRlcAm/");
   NS_LOG_LOGIC("basePath " << basePath);
 
   if (m_rlcStats)
@@ -736,6 +777,19 @@ MmWaveBearerStatsConnector::ConnectTracesUe (std::string context, uint64_t imsi,
       Config::Connect (basePath + "/Srb1/LtePdcp/TxPDU",
 		       MakeBoundCallback (&UlTxPduCallback, arg));
     }
+
+  if (m_retxStats) // TODO set condition
+    {
+      Ptr<MmWaveBoundCallbackArgumentRetx> arg = Create<MmWaveBoundCallbackArgumentRetx> ();
+      arg->imsi = imsi;
+      arg->cellId = cellId; 
+      arg->stats = m_retxStats;
+      Config::Connect (basePath + "/DataRadioBearerMap/*/LteRlc/TxCompletedCallback",
+         MakeBoundCallback (&UlRetxCallback, arg));
+      Config::Connect (basePath + "/DataRadioBearerMap/*/LteRlc/$ns3::LteRlcAm/PacketDroppedCallback",
+         MakeBoundCallback (&RxPktDropCallback, arg));
+    }
+  
   if(m_mcStats)
     {
       Ptr<McMmWaveBoundCallbackArgument> arg = Create<McMmWaveBoundCallbackArgument> ();
@@ -787,6 +841,17 @@ MmWaveBearerStatsConnector::ConnectTracesEnb (std::string context, uint64_t imsi
 		       MakeBoundCallback (&DlTxPduCallback, arg));
       Config::Connect (basePath.str () + "/Srb1/LtePdcp/RxPDU",
 		       MakeBoundCallback (&UlRxPduCallback, arg));
+    }
+  if (m_retxStats) 
+    {
+      Ptr<MmWaveBoundCallbackArgumentRetx> arg = Create<MmWaveBoundCallbackArgumentRetx> ();
+      arg->imsi = imsi;
+      arg->cellId = cellId; 
+      arg->stats = m_retxStats;
+      Config::Connect (basePath.str () + "/DataRadioBearerMap/*/LteRlc/TxCompletedCallback",
+         MakeBoundCallback (&DlRetxCallback, arg));
+      Config::Connect (basePath.str () + "/DataRadioBearerMap/*/LteRlc/$ns3::LteRlcAm/PacketDroppedCallback",
+         MakeBoundCallback (&RxPktDropCallback, arg));
     }
 }
 

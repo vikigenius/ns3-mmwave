@@ -63,6 +63,7 @@
 #include <ns3/mmwave-beamforming.h>
 #include <ns3/mmwave-channel-matrix.h>
 #include <ns3/mmwave-bearer-stats-calculator.h>
+#include <ns3/mmwave-retx-stats-calculator.h>
 #include <ns3/mc-stats-calculator.h>
 #include <ns3/mmwave-bearer-stats-connector.h>
 #include <ns3/propagation-loss-model.h>
@@ -210,7 +211,9 @@ private:
 	Ptr<MmWaveBearerStatsCalculator> GetRlcStats (void);
 	void EnablePdcpTraces (void);
 	Ptr<MmWaveBearerStatsCalculator> GetPdcpStats (void);
-	void EnableMcTraces (void);
+        void EnableRetxTraces (void);
+        Ptr<MmWaveRetxStatsCalculator> GetRetxStats (void);
+        void EnableMcTraces (void);
 	Ptr<McStatsCalculator> GetMcStats (void);
 
 	Ptr<SpectrumChannel> m_channel; // mmWave TDD channel	
@@ -282,7 +285,8 @@ private:
 
 	Ptr<MmWaveBearerStatsCalculator> m_rlcStats;
 	Ptr<MmWaveBearerStatsCalculator> m_pdcpStats;
-	Ptr<McStatsCalculator> m_mcStats;
+        Ptr<MmWaveRetxStatsCalculator> m_retxStats;
+        Ptr<McStatsCalculator> m_mcStats;
 	Ptr<MmWaveBearerStatsConnector> m_radioBearerStatsConnector;
   	Ptr<CoreNetworkStatsCalculator> m_cnStats;
 

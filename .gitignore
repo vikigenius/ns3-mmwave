@@ -1,3 +1,4 @@
+.dir-local.el
 *.diff
 *.orig
 *.patch
@@ -16,6 +17,9 @@
 *.routes
 *.tr
 [D|U]l[A-Z][a-z]*Stats.txt
+[U|R]x[A-Z][a-z]*Stats.txt
+[D|U]l[A-Z][a-z]*Trace.txt
+[U|R]x[A-Z][a-z]*Trace.txt
 seventh-packet-byte-count.png
 
 \#*#

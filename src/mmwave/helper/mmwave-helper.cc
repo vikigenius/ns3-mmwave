@@ -2105,13 +2105,14 @@ MmWaveHelper::ActivateDataRadioBearer (Ptr<NetDevice> ueDevice, EpsBearer bearer
 void
 MmWaveHelper::EnableTraces (void)
 {
-	//EnableDlPhyTrace ();
-	//EnableUlPhyTrace ();
-	//EnableEnbPacketCountTrace ();
-	//EnableUePacketCountTrace ();
-	//EnableTransportBlockTrace ();
+	EnableDlPhyTrace ();
+	EnableUlPhyTrace ();
+	EnableEnbPacketCountTrace ();
+	EnableUePacketCountTrace ();
+	EnableTransportBlockTrace ();
 	EnableRlcTraces ();
 	EnablePdcpTraces ();
+        EnableRetxTraces ();
 	EnableMcTraces ();
 }
 
@@ -2189,6 +2190,20 @@ Ptr<MmWaveBearerStatsCalculator>
 MmWaveHelper::GetPdcpStats (void)
 {
   return m_pdcpStats;
+}
+
+void
+MmWaveHelper::EnableRetxTraces (void)
+{
+  NS_ASSERT_MSG (m_retxStats == 0, "please make sure that MmWaveHelper::EnableRetxTraces is called at most once");
+  m_retxStats = CreateObject<MmWaveRetxStatsCalculator> ();
+  m_radioBearerStatsConnector->EnableRetxStats (m_retxStats);
+}
+
+Ptr<MmWaveRetxStatsCalculator>
+MmWaveHelper::GetRetxStats (void)
+{
+  return m_retxStats;
 }
 
 void

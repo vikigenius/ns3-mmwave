@@ -29,6 +29,7 @@
 #include <ns3/lte-rlc.h>
 #include <ns3/epc-x2-sap.h>
 #include <ns3/lte-pdcp-header.h>
+#include <ns3/error-model.h>
 
 #include <vector>
 #include <map>
@@ -88,6 +89,17 @@ public:
     return m_txedRlcSduBuffer;
   }
 
+  /**
+   * TracedCallback signature for
+   *
+   * \param [in] rnti C-RNTI scheduled.
+   * \param [in] lcid The logical channel id corresponding to
+   *             the sending RLC instance.
+   * \param [in] the packet that was dropped
+   */
+  typedef void (* RlcPacketDroppedCallback)
+    (uint16_t rnti, uint8_t lcid, Ptr<const Packet>);
+
 private:
   //whether the last SDU in the txonBuffer is a complete SDU.
   bool is_fragmented;
@@ -144,6 +156,8 @@ private:
   std::string GetBufferSizeFilename();
   void SetBufferSizeFilename(std::string filename);
   void BufferSizeTrace();
+
+  void SetReceiveErrorModel (Ptr<ErrorModel> em);
 
 private:
     std::vector < Ptr<Packet> > m_txonBuffer;       // Transmission buffer
@@ -278,7 +292,10 @@ private:
   EventId m_traceBufferSizeEvent;
 
   bool m_enableAqm;
+  bool m_enableErrorModel;
 
+  TracedCallback<uint16_t, uint8_t, Ptr<const Packet> > m_packetDroppedCallback;
+  Ptr<ErrorModel> m_receiveErrorModel;
 };
 
 } // namespace ns3

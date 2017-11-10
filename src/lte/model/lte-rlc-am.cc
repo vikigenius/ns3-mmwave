@@ -26,7 +26,8 @@
 #include "ns3/simulator.h"
 #include "ns3/log.h"
 #include "ns3/string.h"
-
+#include "ns3/pointer.h"
+#include "ns3/error-model.h"
 #include "ns3/lte-rlc-am-header.h"
 #include "ns3/lte-rlc-am.h"
 #include "ns3/lte-rlc-sdu-status-tag.h"
@@ -108,14 +109,14 @@ LteRlcAm::LteRlcAm ()
 void
 LteRlcAm::BufferSizeTrace()
 {
-  NS_LOG_LOGIC("BufferSizeTrace " << Simulator::Now().GetSeconds() << " " << m_rnti << " " << m_lcid << " " << m_txonBufferSize);
+  NS_LOG_LOGIC("BufferSizeTrace " << Simulator::Now().GetSeconds() << " " << m_rnti << " " << m_lcid << " " << m_txonBufferSize << " " << m_retxBufferSize << " " << m_txedBufferSize);
   // write to file
   if(!m_bufferSizeFile.is_open())
   {
     m_bufferSizeFile.open(GetBufferSizeFilename().c_str(), std::ofstream::app);
     NS_LOG_LOGIC("File opened");
   }
-  m_bufferSizeFile << Simulator::Now().GetSeconds() << " " << m_rnti << " " << (uint16_t) m_lcid << " " << m_txonBufferSize << std::endl;
+  m_bufferSizeFile << Simulator::Now().GetSeconds() << " " << m_rnti << " " << (uint16_t) m_lcid << " " << m_txonBufferSize << " " << m_retxBufferSize << " " << m_txedBufferSize << std::endl;
 
   m_traceBufferSizeEvent = Simulator::Schedule(MilliSeconds(10), &LteRlcAm::BufferSizeTrace, this);
 }
@@ -184,9 +185,24 @@ LteRlcAm::GetTypeId (void)
                    MakeBooleanChecker ())
    .AddAttribute ("BufferSizeFilename",
                    "Name of the file where the buffer size will be periodically written.",
-                   StringValue ("RlcAmBufferSize.txt"),
+                   StringValue ("RlcAmBufferSizeStats.txt"),
                    MakeStringAccessor (&LteRlcAm::SetBufferSizeFilename),
                    MakeStringChecker ())
+    .AddAttribute("EnableErrorModel",
+                  "Enable the error model",
+                  BooleanValue(true),
+                  MakeBooleanAccessor(&LteRlcAm::m_enableErrorModel),
+                  MakeBooleanChecker())
+    .AddAttribute("ReceiveErrorModel",
+                  "The Receive side Error Model",
+                  PointerValue(),
+                  MakePointerAccessor(&LteRlcAm::m_receiveErrorModel),
+                  MakePointerChecker<ErrorModel>())
+    .AddTraceSource("PacketDroppedCallback",
+                    "RLC Packet Dropped",
+                    MakeTraceSourceAccessor(&LteRlcAm::m_packetDroppedCallback),
+                    "ns3::LteRlcAm::RlcPacketDroppedCallback"
+                    )
     ;
   return tid;
 }
@@ -225,6 +241,7 @@ LteRlcAm::DoDispose ()
   m_traceBufferSizeEvent.Cancel();
   m_bufferSizeFile.close();
 
+  m_receiveErrorModel = 0;
   LteRlc::DoDispose ();
 }
 
@@ -1767,6 +1784,18 @@ LteRlcAm::RlcPdusToRlcSdus (std::vector < LteRlcAm::RetxPdu > RlcPdus){
 void
 LteRlcAm::DoReceivePdu (Ptr<Packet> p)
 {
+
+  // Get RLC header parameters
+  LteRlcAmHeader rlcAmHeader;
+  p->PeekHeader (rlcAmHeader);
+
+  if(rlcAmHeader.IsDataPdu() && m_lcid == 3 && m_enableErrorModel && m_receiveErrorModel && m_receiveErrorModel->IsCorrupt(p))
+    {
+      NS_LOG_INFO ("Packet Dropped in RLC AM Size: " << p->GetSize());
+      m_packetDroppedCallback(m_rnti, m_lcid, p);
+      return;
+    }
+
   NS_LOG_FUNCTION (this << m_rnti << (uint32_t) m_lcid << p->GetSize ());
 
   // Receiver timestamp
@@ -1778,13 +1807,11 @@ LteRlcAm::DoReceivePdu (Ptr<Packet> p)
     }
   m_rxPdu (m_rnti, m_lcid, p->GetSize (), delay.GetNanoSeconds ());
 
-  // Get RLC header parameters
-  LteRlcAmHeader rlcAmHeader;
-  p->PeekHeader (rlcAmHeader);
   NS_LOG_LOGIC ("RLC header: " << rlcAmHeader);
 
   if ( rlcAmHeader.IsDataPdu () )
     {
+
       NS_LOG_INFO (this << " RLC DoReceivePdu " << m_rnti << (uint32_t) m_lcid << p->GetSize () << " time " << Simulator::Now().GetSeconds());
 
       // 5.1.3.1   Transmit operations
@@ -2898,4 +2925,9 @@ LteRlcAm::ExpireRbsTimer (void)
     }
 }
 
+void
+LteRlcAm::SetReceiveErrorModel (Ptr<ErrorModel> em)
+{
+  m_receiveErrorModel = em;
+}
 } // namespace ns3

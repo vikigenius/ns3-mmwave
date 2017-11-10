@@ -39,6 +39,7 @@
 #include <ns3/simple-ref-count.h>
 #include <ns3/ptr.h>
 #include "mc-stats-calculator.h"
+#include "mmwave-retx-stats-calculator.h"
 #include <fstream>
 #include "ns3/object.h"
 #include <string>
@@ -88,6 +89,13 @@ public:
    * \param rlcStats statistics calculator for RLC layer
    */
   void EnableRlcStats (Ptr<MmWaveBearerStatsCalculator> rlcStats);
+
+  /**
+   * Enables trace sinks for RLC layer retransmissions. Usually, this function
+   * is called by LteHelper::EnableRetxTraces().
+   * \param rlcStats statistics calculator for RLC layer
+   */
+  void EnableRetxStats (Ptr<MmWaveRetxStatsCalculator> retxStats);
 
   /**
    * Enables trace sinks for PDCP layer. Usually, this function
@@ -326,7 +334,8 @@ private:
 
 
   Ptr<MmWaveBearerStatsCalculator> m_rlcStats; //!< Calculator for RLC Statistics
-  Ptr<MmWaveBearerStatsCalculator> m_pdcpStats; //!< Calculator for PDCP Statistics
+  Ptr<MmWaveBearerStatsCalculator> m_pdcpStats; //!< Calculator for PDCP Statistics 
+  Ptr<MmWaveRetxStatsCalculator> m_retxStats; //!< Calculator for Retransmission Statistics 
   Ptr<McStatsCalculator> m_mcStats;
 
   bool m_connected; //!< true if traces are connected to sinks, initially set to false

@@ -91,7 +91,6 @@ private:
     mutable uint16_t m_mtu;
     bool m_linkUp;
     uint32_t m_ifIndex;
-
 };
 
 }
