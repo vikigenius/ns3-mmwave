@@ -1,4 +1,4 @@
-.dir-local.el
+.dir-locals.el
 *.diff
 *.orig
 *.patch
