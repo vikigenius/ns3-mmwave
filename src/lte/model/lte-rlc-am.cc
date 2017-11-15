@@ -188,21 +188,6 @@ LteRlcAm::GetTypeId (void)
                    StringValue ("RlcAmBufferSizeStats.txt"),
                    MakeStringAccessor (&LteRlcAm::SetBufferSizeFilename),
                    MakeStringChecker ())
-    .AddAttribute("EnableErrorModel",
-                  "Enable the error model",
-                  BooleanValue(true),
-                  MakeBooleanAccessor(&LteRlcAm::m_enableErrorModel),
-                  MakeBooleanChecker())
-    .AddAttribute("ReceiveErrorModel",
-                  "The Receive side Error Model",
-                  PointerValue(),
-                  MakePointerAccessor(&LteRlcAm::m_receiveErrorModel),
-                  MakePointerChecker<ErrorModel>())
-    .AddTraceSource("PacketDroppedCallback",
-                    "RLC Packet Dropped",
-                    MakeTraceSourceAccessor(&LteRlcAm::m_packetDroppedCallback),
-                    "ns3::LteRlcAm::RlcPacketDroppedCallback"
-                    )
     ;
   return tid;
 }
@@ -241,7 +226,6 @@ LteRlcAm::DoDispose ()
   m_traceBufferSizeEvent.Cancel();
   m_bufferSizeFile.close();
 
-  m_receiveErrorModel = 0;
   LteRlc::DoDispose ();
 }
 
@@ -1784,18 +1768,6 @@ LteRlcAm::RlcPdusToRlcSdus (std::vector < LteRlcAm::RetxPdu > RlcPdus){
 void
 LteRlcAm::DoReceivePdu (Ptr<Packet> p)
 {
-
-  // Get RLC header parameters
-  LteRlcAmHeader rlcAmHeader;
-  p->PeekHeader (rlcAmHeader);
-
-  if(rlcAmHeader.IsDataPdu() && m_lcid == 3 && m_enableErrorModel && m_receiveErrorModel && m_receiveErrorModel->IsCorrupt(p))
-    {
-      NS_LOG_INFO ("Packet Dropped in RLC AM Size: " << p->GetSize());
-      m_packetDroppedCallback(m_rnti, m_lcid, p);
-      return;
-    }
-
   NS_LOG_FUNCTION (this << m_rnti << (uint32_t) m_lcid << p->GetSize ());
 
   // Receiver timestamp
@@ -1806,6 +1778,11 @@ LteRlcAm::DoReceivePdu (Ptr<Packet> p)
       delay = Simulator::Now() - rlcTag.GetSenderTimestamp ();
     }
   m_rxPdu (m_rnti, m_lcid, p->GetSize (), delay.GetNanoSeconds ());
+
+  // Get RLC header parameters
+  LteRlcAmHeader rlcAmHeader;
+  p->PeekHeader (rlcAmHeader);
+
 
   NS_LOG_LOGIC ("RLC header: " << rlcAmHeader);
 
@@ -2925,9 +2902,4 @@ LteRlcAm::ExpireRbsTimer (void)
     }
 }
 
-void
-LteRlcAm::SetReceiveErrorModel (Ptr<ErrorModel> em)
-{
-  m_receiveErrorModel = em;
-}
 } // namespace ns3

@@ -59,16 +59,12 @@ public:
 
   void RegisterRetxDl(uint64_t imsi, uint16_t cellId, uint16_t rnti, uint8_t lcid, uint32_t packetSize, uint32_t numRetx);
   void RegisterRetxUl(uint64_t imsi, uint16_t cellId, uint16_t rnti, uint8_t lcid, uint32_t packetSize, uint32_t numRetx);
-  void RegisterRxDrop(uint64_t imsi, uint16_t cellId, uint16_t rnti, uint8_t lcid, Ptr<const Packet> p);
   
   std::ofstream m_retxDlFile;
   std::string m_retxDlFilename;
 
   std::ofstream m_retxUlFile;
   std::string m_retxUlFilename;
-
-  std::ofstream m_pktDropFile;
-  std::string m_pktDropFilename;
 };
 
 }

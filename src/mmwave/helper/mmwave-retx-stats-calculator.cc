@@ -62,11 +62,6 @@ MmWaveRetxStatsCalculator::GetTypeId (void)
                    StringValue ("UlRlcRetxStats.txt"),
                    MakeStringAccessor (&MmWaveRetxStatsCalculator::m_retxUlFilename),
                    MakeStringChecker ())
-    .AddAttribute ("RlcDropFilename",
-                   "Name of the file where the RX RLC drop results will be saved.",
-                   StringValue ("RxRlcPktDropsStats.txt"),
-                   MakeStringAccessor (&MmWaveRetxStatsCalculator::m_pktDropFilename),
-                   MakeStringChecker ())
     ;
   return tid;
 }
@@ -101,22 +96,6 @@ MmWaveRetxStatsCalculator::RegisterRetxUl(uint64_t imsi, uint16_t cellId,
   	}
 	m_retxUlFile << Simulator::Now().GetSeconds() << " " << cellId << " " << imsi << " "
 		<< rnti << " " << (uint16_t) lcid << " " << packetSize << " " << numRetx << std::endl;
-}
-
-void
-MmWaveRetxStatsCalculator::RegisterRxDrop(uint64_t imsi, uint16_t cellId, 
-                                          uint16_t rnti, uint8_t lcid, Ptr<const Packet> p)
-{
-	if(!m_pktDropFile.is_open())
-	{
-	    m_pktDropFile.open(m_pktDropFilename.c_str());
-	    NS_LOG_LOGIC("File opened");
-  	}
-        LteRlcAmHeader rlcAmHeader;
-        p->PeekHeader (rlcAmHeader);
-        SequenceNumber10 seqNumber = rlcAmHeader.GetSequenceNumber ();
-	m_pktDropFile << Simulator::Now().GetSeconds() << " " << cellId << " " << imsi << " "
-                      << rnti << " " << (uint16_t) lcid << " " << seqNumber << " " << p->GetSize() << std::endl;
 }
 
 }
