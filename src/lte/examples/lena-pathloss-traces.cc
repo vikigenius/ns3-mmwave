@@ -85,7 +85,7 @@ int main (int argc, char *argv[])
   // but it WON'T work if you ONLY use SpectrumPropagationLossModels such as:
   // ns3::FriisSpectrumPropagationLossModel
   // ns3::ConstantSpectrumPropagationLossModel
-  lteHelper->SetAttribute ("PathlossModel", StringValue ("ns3::Cost231PropagationLossModel"));
+  lteHelper->SetAttribute ("PathlossModel", StringValue ("ns3::BuildingsPropagationLossModel"));
   
 
   // Create Nodes: eNodeB and UE

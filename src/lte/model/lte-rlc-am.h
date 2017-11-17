@@ -30,7 +30,7 @@
 #include <ns3/epc-x2-sap.h>
 #include <ns3/lte-pdcp-header.h>
 #include <ns3/error-model.h>
-
+#include <ns3/packet.h>
 #include <vector>
 #include <map>
 #include <fstream>
@@ -146,6 +146,18 @@ private:
   void SetBufferSizeFilename(std::string filename);
   void BufferSizeTrace();
 
+  /**
+   * TracedCallback signature for
+   *
+   * \param [in] rnti C-RNTI scheduled.
+   * \param [in] lcid The logical channel id corresponding to
+   *             the sending RLC instance.
+   * \param [in] packet the received packet.
+   * \param [in] delay Delay since sender timestamp, in ns.
+   */
+  typedef void (* ReceivePacketTracedCallback)
+  (uint16_t rnti, uint8_t lcid, Ptr<const Packet> packet, uint64_t delay);
+  
 private:
     std::vector < Ptr<Packet> > m_txonBuffer;       // Transmission buffer
 
@@ -278,6 +290,8 @@ private:
   std::ofstream m_bufferSizeFile;
   EventId m_traceBufferSizeEvent;
 
+  TracedCallback<uint16_t, uint8_t, Ptr<const Packet>, uint64_t > m_rxPacket;
+  
   bool m_enableAqm;
 };
 

@@ -36,6 +36,8 @@
 #include "ns3/config-store.h"
 #include <ns3/buildings-helper.h>
 #include <ns3/buildings-module.h>
+#include <ns3/tcp-header.h>
+#include <ns3/lte-rlc-am-header.h>
 
 using namespace ns3;
 
@@ -211,7 +213,7 @@ MyApp::SendPacket (void)
   Ptr<Packet> packet = Create<Packet> (m_packetSize);
   TimestampTag tag;
   tag.SetTimestamp(Simulator::Now());
-  packet->AddPacketTag(tag);
+  packet->AddByteTag(tag);
   m_socket->Send (packet);
   NS_LOG_DEBUG ("Sending:    "<<send_num++ << "\t" << Simulator::Now ().GetSeconds ());
 
@@ -247,12 +249,22 @@ RttChange (Ptr<OutputStreamWrapper> stream, Time oldRtt, Time newRtt)
 static void Rx (Ptr<OutputStreamWrapper> stream, Ptr<const Packet> packet, const Address &from)
 {
   TimestampTag tag;
-  packet->PeekPacketTag(tag);
-  Time initial(tag.GetTimestamp());
-  Time curr(Simulator::Now());
-  Time delay(curr - initial);
-  //TODO: Add delay to stream output
-  *stream->GetStream () << curr.GetSeconds () << "," << delay << "," << packet->GetSize() << std::endl;
+  if(packet->FindFirstMatchingByteTag(tag))
+    {
+      Time initial(tag.GetTimestamp());
+      Time curr(Simulator::Now());
+      Time delay(curr - initial);
+      //TODO: Add delay to stream output
+      *stream->GetStream () << curr.GetSeconds () << "," << delay << "," << packet->GetSize() << std::endl;      
+    }
+}
+
+static void RlcRx (Ptr<OutputStreamWrapper> stream, uint16_t rnti, uint8_t lcid, Ptr<const Packet> packet, uint64_t delay)
+{
+  LteRlcAmHeader rlcHeader;
+  TcpHeader tcpHeader;
+  packet->PeekHeader(rlcHeader);
+  packet->PeekHeader(tcpHeader);
 }
 
 static void OnTcpRTO (Ptr<OutputStreamWrapper> stream, Time oldval, Time newval)
@@ -277,6 +289,7 @@ int main (int argc, char* argv[])
   cmd.Parse(argc, argv);
 
   Config::SetDefault ("ns3::TcpSocket::SegmentSize", UintegerValue (1400));
+  Config::SetDefault ("ns3::TcpSocketBase::MinRto", TimeValue (MilliSeconds(5)));
   Config::SetDefault ("ns3::LteRlcAm::MaxTxBufferSize", UintegerValue (1024 * 1024));
   Config::SetDefault ("ns3::MmWaveHelper::RlcAmEnabled", BooleanValue(true));
   Config::SetDefault ("ns3::MmWaveHelper::HarqEnabled", BooleanValue(true));
@@ -313,7 +326,7 @@ int main (int argc, char* argv[])
   PointToPointHelper p2ph;
   p2ph.SetDeviceAttribute ("DataRate", DataRateValue (DataRate ("100Gb/s")));
   p2ph.SetDeviceAttribute ("Mtu", UintegerValue (1500));
-  p2ph.SetChannelAttribute ("Delay", TimeValue (Seconds (0.5)));
+  p2ph.SetChannelAttribute ("Delay", TimeValue (MilliSeconds(50)));
   NetDeviceContainer internetDevices = p2ph.Install (pgw, remoteHost);
   Ipv4AddressHelper ipv4h;
   ipv4h.SetBase ("1.0.0.0", "255.0.0.0");
@@ -327,27 +340,27 @@ int main (int argc, char* argv[])
   
   Ptr<Building> building1;
   building1 = Create<Building> ();
-  building1->SetBoundaries (Box(69.5,70.0,4.5,5.0,0.0,1.5));
+  building1->SetBoundaries (Box(69.5,71.0,4.5,6.0,0.0,2.5));
 
   Ptr<Building> building2;
   building2 = Create<Building> ();
-  building2->SetBoundaries (Box(60.0,60.5,9.5,10.0,0.0,1.5));
+  building2->SetBoundaries (Box(60.0,61.5,9.5,12.0,0.0,2.5));
 
   Ptr<Building> building3;
   building3 = Create<Building> ();
-  building3->SetBoundaries (Box(54.0,54.5,6.0,6.5,0.0,1.5));
+  building3->SetBoundaries (Box(54.0,55.5,6.0,8.5,0.0,2.5));
   
   Ptr<Building> building4;
   building4 = Create<Building> ();
-  building4->SetBoundaries (Box(60.0,60.5,6.0,6.5,0.0,1.5));
+  building4->SetBoundaries (Box(60.0,61.5,6.0,8.5,0.0,2.5));
 
   Ptr<Building> building5;
   building5 = Create<Building> ();
-  building5->SetBoundaries (Box(70.0,70.5,0.0,0.5,0.0,1.5));
+  building5->SetBoundaries (Box(70.0,71.5,0.0,2.5,0.0,2.5));
 
   Ptr<Building> building6;
   building6 = Create<Building> ();
-  building6->SetBoundaries (Box(50.0,50.5,4.0,4.5,0.0,1.5));
+  building6->SetBoundaries (Box(50.0,51.5,4.0,6.5,0.0,2.5));
 
   NodeContainer ueNodes;
   NodeContainer enbNodes;
@@ -366,7 +379,7 @@ int main (int argc, char* argv[])
   uemobility.SetMobilityModel ("ns3::ConstantVelocityMobilityModel");
   uemobility.Install (ueNodes);
 
-  ueNodes.Get (0)->GetObject<MobilityModel> ()->SetPosition (Vector (300, -0.2, 1));
+  ueNodes.Get (0)->GetObject<MobilityModel> ()->SetPosition (Vector (150, -0.2, 1));
   ueNodes.Get (0)->GetObject<ConstantVelocityMobilityModel> ()->SetVelocity (Vector (0, 0, 0));
 
   Simulator::Schedule (Seconds (2), &ChangeSpeed, ueNodes.Get (0), Vector (0, 1.5, 0));
@@ -420,6 +433,8 @@ int main (int argc, char* argv[])
   Ptr<OutputStreamWrapper> stream3 = asciiTraceHelper.CreateFileStream ("mmWave-tcp-rtoevents.txt");
   ns3TcpSocket->TraceConnectWithoutContext ("RTO", MakeBoundCallback (&OnTcpRTO, stream3));
 
+  Ptr<OutputStreamWrapper> stream5 = asciiTraceHelper.CreateFileStream ("mmWave-tcp-data-newreno.txt");
+  Config::Connect("/NodeList/*/DeviceList/*/MmWaveUeRrc/*/DataRadioBearerMap/*/LteRlc/$ns3::LteRlcAm/RxPacket", MakeBoundCallback(&RlcRx, stream5));  
   app->SetStartTime (Seconds (0.1));
   app->SetStopTime (Seconds (stopTime));
 
