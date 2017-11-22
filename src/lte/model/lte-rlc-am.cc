@@ -191,6 +191,10 @@ LteRlcAm::GetTypeId (void)
                     "PDU Retransmitted",
                     MakeTraceSourceAccessor(&LteRlcAm::m_retxPdu),
                     "ns3::LteRlc::RetransmitTracedCallback")
+    .AddTraceSource("RecvBuffer",
+                    "PDU placed in retransmission buffer",
+                    MakeTraceSourceAccessor(&LteRlcAm::m_recvBuffer),
+                    "ns3::LteRlc::ReceiveBufferTracedCallback")
     ;
   return tid;
 }

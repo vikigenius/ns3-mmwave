@@ -153,10 +153,24 @@ private:
    * \param [in] lcid The logical channel id corresponding to
    *             the sending RLC instance.
    * \param [in] the retransmitted pdu.
-   * \param [in] the retransmitted pdu.
+   * \param [in] retransmission count.
    */
   typedef void (* RetransmitTracedCallback)
   (uint16_t rnti, uint8_t lcid, Ptr<const Packet> retxPdu, uint16_t retxCount);
+
+  /**
+   * TracedCallback signature for
+   *
+   * \param [in] rnti C-RNTI scheduled.
+   * \param [in] lcid The logical channel id corresponding to
+   *             the sending RLC instance.
+   * \param [in] the received pdu.
+   * \param [in] the reception buffer size.
+   * \param [in] vrR.
+   * \param [in] vrH.
+   */
+  typedef void (* ReceiveBufferTracedCallback)
+  (uint16_t rnti, uint8_t lcid, Ptr<const Packet> packet, uint16_t bufferSize, SequenceNumber10 vrR, SequenceNumber10 vrH);  
 
 private:
     std::vector < Ptr<Packet> > m_txonBuffer;       // Transmission buffer
@@ -296,6 +310,11 @@ private:
    * Used to inform of a PDU retransmission from the MAC SAP user
    */
   TracedCallback<uint16_t, uint8_t, Ptr<const Packet>, uint16_t > m_retxPdu;
+  /**
+   * Used to inform of a complete PDU being placed in the retransmission buffer
+   */
+  TracedCallback<uint16_t, uint8_t, Ptr<const Packet>, uint16_t, SequenceNumber10, SequenceNumber10 > m_recvBuffer;
+
 };
 
 } // namespace ns3
