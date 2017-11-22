@@ -187,6 +187,10 @@ LteRlcAm::GetTypeId (void)
                    StringValue ("RlcAmBufferSize.txt"),
                    MakeStringAccessor (&LteRlcAm::SetBufferSizeFilename),
                    MakeStringChecker ())
+    .AddTraceSource("RetxPDU",
+                    "PDU Retransmitted",
+                    MakeTraceSourceAccessor(&LteRlcAm::m_retxPdu),
+                    "ns3::LteRlc::RetransmitTracedCallback")
     ;
   return tid;
 }
@@ -2159,6 +2163,8 @@ LteRlcAm::DoReceivePdu (Ptr<Packet> p)
               if (m_retxBuffer.at (seqNumberValue).m_pdu)
                 {
                   NS_LOG_INFO ("ACKed SN = " << seqNumberValue << " from retxBuffer");
+                  NS_LOG_INFO ("m_retxPdu " << m_rnti);
+                  m_retxPdu(m_rnti, m_lcid, m_retxBuffer.at (seqNumberValue).m_pdu, m_retxBuffer.at (seqNumberValue).m_retxCount);
                   m_retxBufferSize -= m_retxBuffer.at (seqNumberValue).m_pdu->GetSize ();
                   NS_LOG_LOGIC("m_txCompletedCallback " << m_rnti);
 

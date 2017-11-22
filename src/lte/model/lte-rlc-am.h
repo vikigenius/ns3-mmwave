@@ -30,6 +30,8 @@
 #include <ns3/epc-x2-sap.h>
 #include <ns3/lte-pdcp-header.h>
 
+#include "ns3/packet.h"
+#include "ns3/ptr.h"
 #include <vector>
 #include <map>
 #include <fstream>
@@ -144,6 +146,17 @@ private:
   std::string GetBufferSizeFilename();
   void SetBufferSizeFilename(std::string filename);
   void BufferSizeTrace();
+  /**
+   * TracedCallback signature for
+   *
+   * \param [in] rnti C-RNTI scheduled.
+   * \param [in] lcid The logical channel id corresponding to
+   *             the sending RLC instance.
+   * \param [in] the retransmitted pdu.
+   * \param [in] the retransmitted pdu.
+   */
+  typedef void (* RetransmitTracedCallback)
+  (uint16_t rnti, uint8_t lcid, Ptr<const Packet> retxPdu, uint16_t retxCount);
 
 private:
     std::vector < Ptr<Packet> > m_txonBuffer;       // Transmission buffer
@@ -279,6 +292,10 @@ private:
 
   bool m_enableAqm;
 
+  /**
+   * Used to inform of a PDU retransmission from the MAC SAP user
+   */
+  TracedCallback<uint16_t, uint8_t, Ptr<const Packet>, uint16_t > m_retxPdu;
 };
 
 } // namespace ns3
