@@ -33,6 +33,8 @@
 #include "mmwave-bearer-stats-calculator.h"
 #include "ns3/string.h"
 #include "ns3/nstime.h"
+#include <ns3/tcp-header.h>
+#include <ns3/lte-rlc-am-header.h>
 #include <ns3/log.h>
 #include <vector>
 #include <algorithm>
@@ -100,6 +102,16 @@ MmWaveBearerStatsCalculator::GetTypeId (void)
                    "Name of the file where the uplink results will be saved.",
                    StringValue ("UlPdcpStats.txt"),
                    MakeStringAccessor (&MmWaveBearerStatsCalculator::SetUlPdcpOutputFilename),
+                   MakeStringChecker ())
+    .AddAttribute ("UlRlcRetxOutputFilename",
+                   "Name of the file where the uplink Rlc Retx results will be saved.",
+                   StringValue ("UlRlcRetxStats.txt"),
+                   MakeStringAccessor (&MmWaveBearerStatsCalculator::SetUlRetxOutputFilename),
+                   MakeStringChecker ())
+    .AddAttribute ("DlRlcBufferOutputFilename",
+                   "Name of the file where the Rlc Buffer results will be saved.",
+                   StringValue ("DlRlcBufferStats.txt"),
+                   MakeStringAccessor (&MmWaveBearerStatsCalculator::SetDlRlcBufferOutputFilename),
                    MakeStringChecker ())
   ;
   return tid;
@@ -251,6 +263,41 @@ MmWaveBearerStatsCalculator::UlRxPdu (uint16_t cellId, uint64_t imsi, uint16_t r
   m_pendingOutput = true;*/
 }
 
+void
+MmWaveBearerStatsCalculator::UlRetxPdu (std::string device, uint16_t cellId, uint64_t imsi, uint16_t rnti, uint8_t lcid, Ptr<const Packet> packet, uint16_t retxCount)
+{
+  NS_LOG_FUNCTION (this << "UlRxPDU" << cellId << imsi << rnti << (uint32_t) lcid << packet->GetSize() << retxCount);
+
+  if (!m_ulRetxFile.is_open ())
+  {
+  	m_ulRetxFile.open (GetUlRetxOutputFilename ().c_str (), std::ios_base::app);
+  }
+
+  LteRlcAmHeader rlcHeader;
+  //Debug Code TODO: Remove Later
+  packet->PeekHeader(rlcHeader);
+  SequenceNumber10 rlcSeq = rlcHeader.GetSequenceNumber();
+
+  m_ulRetxFile << (Simulator::Now ()).GetSeconds () << " " << device << " " << cellId << " " << imsi << " " << rnti << " " << (uint32_t)lcid << " " << rlcSeq.GetValue() << " " << packet->GetSize() << " " << retxCount << std::endl;
+}
+
+void
+MmWaveBearerStatsCalculator::DlRlcBufferPdu (std::string device, uint16_t cellId, uint64_t imsi, uint16_t rnti, uint8_t lcid, Ptr<const Packet> packet, uint16_t bufferSize, SequenceNumber10 vrR, SequenceNumber10 vrH)
+{
+  NS_LOG_FUNCTION (this << "UlRxPDU" << cellId << imsi << rnti << (uint32_t) lcid << packet->GetSize() << bufferSize << vrR << vrH);
+
+  if (!m_dlBufferFile.is_open ())
+  {
+  	m_dlBufferFile.open (GetDlRlcBufferOutputFilename ().c_str (), std::ios_base::app);
+  }
+
+  LteRlcAmHeader rlcHeader;
+  packet->PeekHeader(rlcHeader);
+  SequenceNumber10 rlcSeq = rlcHeader.GetSequenceNumber();
+
+  m_dlBufferFile << (Simulator::Now ()).GetSeconds () << " " << device << " " << cellId << " " << imsi << " " << rnti << " " << (uint32_t)lcid << " " << rlcSeq.GetValue() << " " << packet->GetSize() << " " << bufferSize << " " << vrR << " " << vrH << std::endl;
+}
+         
 void
 MmWaveBearerStatsCalculator::DlRxPdu (uint16_t cellId, uint64_t imsi, uint16_t rnti, uint8_t lcid, uint32_t packetSize, uint64_t delay)
 {
@@ -719,6 +766,7 @@ MmWaveBearerStatsCalculator::GetUlPdcpOutputFilename (void)
 {
   return m_ulPdcpOutputFilename;
 }
+
 void
 MmWaveBearerStatsCalculator::SetDlPdcpOutputFilename (std::string outputFilename)
 {
@@ -729,6 +777,30 @@ std::string
 MmWaveBearerStatsCalculator::GetDlPdcpOutputFilename (void)
 {
   return m_dlPdcpOutputFilename;
+}
+
+void
+MmWaveBearerStatsCalculator::SetUlRetxOutputFilename (std::string outputFilename)
+{
+  m_ulRetxOutputFilename = outputFilename;
+}
+
+std::string
+MmWaveBearerStatsCalculator::GetUlRetxOutputFilename (void)
+{
+  return m_ulRetxOutputFilename;
+}
+
+void
+MmWaveBearerStatsCalculator::SetDlRlcBufferOutputFilename (std::string outputFilename)
+{
+  m_dlRlcBufferOutputFilename = outputFilename;
+}
+
+std::string
+MmWaveBearerStatsCalculator::GetDlRlcBufferOutputFilename (void)
+{
+  return m_dlRlcBufferOutputFilename;
 }
 
 } // namespace ns3

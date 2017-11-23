@@ -35,6 +35,8 @@
 #include "ns3/object.h"
 #include "ns3/basic-data-calculators.h"
 #include "ns3/lte-common.h"
+#include "ns3/packet.h"
+#include "ns3/lte-rlc-am-header.h"
 #include <string>
 #include <map>
 #include <fstream>
@@ -139,7 +141,32 @@ public:
    */
   std::string GetDlPdcpOutputFilename (void);
 
+  /**
+   * Set the name of the file where the uplink RLC Retx statistics will be stored.
+   *
+   * @param outputFilename string with the name of the file
+   */
+  void SetUlRetxOutputFilename (std::string outputFilename);
 
+  /**
+   * Get the name of the file where the uplink RLC Retx statistics will be stored.
+   * @return the name of the file where the uplink RLC Retx statistics will be stored
+   */
+  std::string GetUlRetxOutputFilename (void);
+
+  /**
+   * Set the name of the file where the uplink RLC Retx statistics will be stored.
+   *
+   * @param outputFilename string with the name of the file
+   */
+  void SetDlRlcBufferOutputFilename (std::string outputFilename);
+
+  /**
+   * Get the name of the file where the uplink RLC Retx statistics will be stored.
+   * @return the name of the file where the uplink RLC Retx statistics will be stored
+   */
+  std::string GetDlRlcBufferOutputFilename (void);
+    
   /** 
    * 
    * \param t the value of the StartTime attribute
@@ -210,6 +237,34 @@ public:
   void
   DlRxPdu (uint16_t cellId, uint64_t imsi, uint16_t rnti, uint8_t lcid, uint32_t packetSize, uint64_t delay);
 
+  /**
+   * Notifies the stats calculator that an uplink reception has occurred.
+   * @param device Identifies entity as UE or ENB
+   * @param cellId CellId of the attached Enb
+   * @param imsi IMSI of the UE who received the PDU
+   * @param rnti C-RNTI of the UE who received the PDU
+   * @param lcid LCID through which the PDU has been received
+   * @param packet The PDU which has been retransmitted
+   * @param retxCount The number of times the PDU has been retransmitted
+   */
+  void
+  UlRetxPdu (std::string device, uint16_t cellId, uint64_t imsi, uint16_t rnti, uint8_t lcid, Ptr<const Packet> packet, uint16_t retxCount);
+
+  /**
+   * Notifies the stats calculator that an uplink reception has occurred.
+   * @param device Identifies entity as UE or ENB
+   * @param cellId CellId of the attached Enb
+   * @param imsi IMSI of the UE who received the PDU
+   * @param rnti C-RNTI of the UE who received the PDU
+   * @param lcid LCID through which the PDU has been received
+   * @param packet The PDU which has been retransmitted
+   * @param bufferSize The size of the RLC reception buffer
+   * @param vrR 
+   * @param vrH
+   */
+  void
+  DlRlcBufferPdu (std::string device, uint16_t cellId, uint64_t imsi, uint16_t rnti, uint8_t lcid, Ptr<const Packet> packet, uint16_t bufferSize, SequenceNumber10 vrR, SequenceNumber10 vrH);
+  
   /**
    * Gets the number of transmitted uplink packets.
    * @param imsi IMSI of the UE
@@ -454,8 +509,20 @@ private:
    */
   std::string m_ulPdcpOutputFilename;
 
+  /**
+   * Name of the file where the uplink RLC Retx statistics will be saved
+   */
+  std::string m_ulRetxOutputFilename;
+
+  /**
+   * Name of the file where the RLC Buffer statistics will be saved
+   */
+  std::string m_dlRlcBufferOutputFilename;
+
   std::ofstream m_dlOutFile;
   std::ofstream m_ulOutFile;
+  std::ofstream m_ulRetxFile;
+  std::ofstream m_dlBufferFile;
 };
 
 } // namespace ns3

@@ -43,6 +43,7 @@
 #include <ns3/lte-enb-net-device.h>
 #include <ns3/lte-ue-rrc.h>
 #include <ns3/lte-ue-net-device.h>
+#include <ns3/lte-rlc-am-header.h>          
 
 namespace ns3 {
 
@@ -58,6 +59,13 @@ operator < (const MmWaveBearerStatsConnector::CellIdRnti& a, const MmWaveBearerS
   return ( (a.cellId < b.cellId) || ( (a.cellId == b.cellId) && (a.rnti < b.rnti) ) );
 }
 
+enum class RadioEntity
+{
+  enb,
+  ue,
+  NA
+};
+         
 /**
  * This structure is used as interface between trace
  * sources and MmWaveBearerStatsCalculator. It stores
@@ -70,6 +78,22 @@ public:
   Ptr<MmWaveBearerStatsCalculator> stats;  //!< statistics calculator
   uint64_t imsi; //!< imsi
   uint16_t cellId; //!< cellId
+  RadioEntity rentity = RadioEntity::NA; //!<Radio Entity
+  //TODO: Make enum private and provide accessor
+  std::string getRadioEntityName() {
+    if (rentity == RadioEntity::enb)
+      {
+        return "ENB";
+      }
+    else if (rentity == RadioEntity::ue)
+      {
+        return "UE";
+      }
+    else
+      {
+        return "";
+      }
+  }
 };
 
 struct McMmWaveBoundCallbackArgument : public SimpleRefCount<McMmWaveBoundCallbackArgument>
@@ -161,7 +185,59 @@ SwitchToMmWaveCallback (Ptr<McMmWaveBoundCallbackArgument> arg, std::string path
  
   arg->stats->SwitchToMmWave (imsi, cellId, rnti);
 }
+/**
+ * Callback function for UL Retx statistics for RLC
+ * /param arg
+ * /param path
+ * /param rnti
+ * /param lcid
+ * /param packet
+ * /param delay
+ */
+void
+UlRetxPduCallback (Ptr<MmWaveBoundCallbackArgument> arg, std::string path,
+                   uint16_t rnti, uint8_t lcid, Ptr<const Packet> packet, uint16_t retxCount)
+{
+  NS_LOG_FUNCTION (path << rnti << (uint16_t)lcid << packet->GetSize() << retxCount);
+ 
+  arg->stats->UlRetxPdu (arg->getRadioEntityName(), arg->cellId, arg->imsi, rnti, lcid, packet, retxCount);
+}
 
+/**
+ * Callback function for UL Retx statistics for RLC
+ * /param arg
+ * /param path
+ * /param rnti
+ * /param lcid
+ * /param packet
+ * /param delay
+ */
+void
+DlRlcBufferPduCallback (Ptr<MmWaveBoundCallbackArgument> arg, std::string path,
+                   uint16_t rnti, uint8_t lcid, Ptr<const Packet> packet, uint16_t retxCount)
+{
+  NS_LOG_FUNCTION (path << rnti << (uint16_t)lcid << packet->GetSize() << retxCount);
+ 
+  arg->stats->UlRetxPdu (arg->getRadioEntityName(), arg->cellId, arg->imsi, rnti, lcid, packet, retxCount);
+}
+
+/**
+ * Callback function for DL Buffer statistics for RLC
+ * /param arg
+ * /param path
+ * /param rnti
+ * /param lcid
+ * /param packetSize
+ * /param delay
+ */
+void
+DlRlcBufferCallback (Ptr<MmWaveBoundCallbackArgument> arg, std::string path,
+                     uint16_t rnti, uint8_t lcid, Ptr<const Packet> packet, uint16_t bufferSize, SequenceNumber10 vrR, SequenceNumber10 vrH)
+{
+  NS_LOG_FUNCTION (path << rnti << (uint16_t)lcid << packet->GetSize() << bufferSize << vrR << vrH);
+ 
+  arg->stats->DlRlcBufferPdu (arg->getRadioEntityName(), arg->cellId, arg->imsi, rnti, lcid, packet, bufferSize, vrR, vrH);
+}
 
 MmWaveBearerStatsConnector::MmWaveBearerStatsConnector ()
   : m_connected (false),
@@ -702,10 +778,15 @@ MmWaveBearerStatsConnector::ConnectTracesUe (std::string context, uint64_t imsi,
       arg->imsi = imsi;
       arg->cellId = cellId; 
       arg->stats = m_rlcStats;
+      arg->rentity = RadioEntity::ue;
       Config::Connect (basePath + "/DataRadioBearerMap/*/LteRlc/TxPDU",
 		       MakeBoundCallback (&UlTxPduCallback, arg));
       Config::Connect (basePath + "/DataRadioBearerMap/*/LteRlc/RxPDU",
 		       MakeBoundCallback (&DlRxPduCallback, arg));
+      Config::Connect (basePath + "/DataRadioBearerMap/*/LteRlc/$ns3::LteRlcAm/RetxPDU",
+		       MakeBoundCallback (&UlRetxPduCallback, arg));
+      Config::Connect (basePath + "/DataRadioBearerMap/*/LteRlc/$ns3::LteRlcAm/RecvBuffer",
+		       MakeBoundCallback (&DlRlcBufferCallback, arg));
       Config::Connect (basePath + "/Srb1/LteRlc/TxPDU",
 		       MakeBoundCallback (&UlTxPduCallback, arg));
       Config::Connect (basePath + "/Srb1/LteRlc/RxPDU",
@@ -760,10 +841,15 @@ MmWaveBearerStatsConnector::ConnectTracesEnb (std::string context, uint64_t imsi
       arg->imsi = imsi;
       arg->cellId = cellId; 
       arg->stats = m_rlcStats;
+      arg->rentity = RadioEntity::enb;
       Config::Connect (basePath.str () + "/DataRadioBearerMap/*/LteRlc/RxPDU",
 		       MakeBoundCallback (&UlRxPduCallback, arg));
       Config::Connect (basePath.str () + "/DataRadioBearerMap/*/LteRlc/TxPDU",
 		       MakeBoundCallback (&DlTxPduCallback, arg));
+      Config::Connect (basePath.str () + "/DataRadioBearerMap/*/LteRlc/$ns3::LteRlcAm/RetxPDU",
+		       MakeBoundCallback (&UlRetxPduCallback, arg));
+      Config::Connect (basePath.str () + "/DataRadioBearerMap/*/LteRlc/$ns3::LteRlcAm/RecvBuffer",
+		       MakeBoundCallback (&DlRlcBufferCallback, arg));
       Config::Connect (basePath.str () + "/Srb0/LteRlc/RxPDU",
 		       MakeBoundCallback (&UlRxPduCallback, arg));
       Config::Connect (basePath.str () + "/Srb0/LteRlc/TxPDU",
