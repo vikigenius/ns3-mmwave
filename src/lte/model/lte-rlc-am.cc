@@ -184,7 +184,7 @@ LteRlcAm::GetTypeId (void)
                    MakeBooleanChecker ())
    .AddAttribute ("BufferSizeFilename",
                    "Name of the file where the buffer size will be periodically written.",
-                   StringValue ("RlcAmBufferSize.txt"),
+                   StringValue ("RlcAmBufferSizeStats.txt"),
                    MakeStringAccessor (&LteRlcAm::SetBufferSizeFilename),
                    MakeStringChecker ())
     .AddTraceSource("RetxPDU",

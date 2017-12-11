@@ -439,9 +439,9 @@ int main (int argc, char* argv[])
   p2ph.EnablePcapAll("mmwave-sgi-capture");
 
   // Activate a data radio bearer
-  enum EpsBearer::Qci q = EpsBearer::GBR_ULTRA_LOW_LAT;
-  EpsBearer bearer (q);
-  mmwaveHelper->ActivateDataRadioBearer (ueDevs, bearer);
+  // enum EpsBearer::Qci q = EpsBearer::GBR_ULTRA_LOW_LAT;
+  // EpsBearer bearer (q);
+  // mmwaveHelper->ActivateDataRadioBearer (ueDevs, bearer);
   
   BuildingsHelper::MakeMobilityModelConsistent ();  
   Simulator::Stop (Seconds (simStopTime));
