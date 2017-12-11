@@ -72,152 +72,152 @@ MmWavePhyRxTrace::ReportCurrentCellRsrpSinrCallback (Ptr<MmWavePhyRxTrace> phySt
 																uint64_t imsi, SpectrumValue& sinr, SpectrumValue& power)
 {
 	NS_LOG_INFO ("UE"<<imsi<<"->Generate RsrpSinrTrace");
-	phyStats->ReportInterferenceTrace (imsi, sinr);
+	//phyStats->ReportInterferenceTrace (imsi, sinr);
 	//phyStats->ReportPowerTrace (imsi, power);
 }
 
-void
-MmWavePhyRxTrace::UlSinrTraceCallback (Ptr<MmWavePhyRxTrace> phyStats, std::string path,
-																uint64_t imsi, SpectrumValue& sinr, SpectrumValue& power)
-{
-	NS_LOG_INFO ("UE"<<imsi<<"->Generate UlSinrTrace");
-	uint64_t slot_count = Now().GetMicroSeconds ()/125;
-	uint32_t rb_count = 1;
-	FILE* log_file;
-	char fname[255];
-	sprintf(fname, "UE_%llu_UL_SINR_dB.txt", (long long unsigned ) imsi);
-	log_file = fopen(fname, "a");
-	Values::iterator it = sinr.ValuesBegin();
-	while(it!=sinr.ValuesEnd())
-	{
-		//fprintf(log_file, "%d\t%d\t%f\t \n", slot_count/2, rb_count, 10*log10(*it));
-		fprintf(log_file, "%llu\t%llu\t%d\t%f\t \n",(long long unsigned )slot_count/8+1, (long long unsigned )slot_count%8+1, rb_count, 10*log10(*it));
-		rb_count++;
-		it++;
-	}
-	fflush(log_file);
-	fclose(log_file);
-	//phyStats->ReportInterferenceTrace (imsi, sinr);
-}
+// void
+// MmWavePhyRxTrace::UlSinrTraceCallback (Ptr<MmWavePhyRxTrace> phyStats, std::string path,
+// 																uint64_t imsi, SpectrumValue& sinr, SpectrumValue& power)
+// {
+// 	NS_LOG_INFO ("UE"<<imsi<<"->Generate UlSinrTrace");
+// 	uint64_t slot_count = Now().GetMicroSeconds ()/125;
+// 	uint32_t rb_count = 1;
+// 	FILE* log_file;
+// 	char fname[255];
+// 	sprintf(fname, "UE_%llu_UL_SINR_dB.txt", (long long unsigned ) imsi);
+// 	log_file = fopen(fname, "a");
+// 	Values::iterator it = sinr.ValuesBegin();
+// 	while(it!=sinr.ValuesEnd())
+// 	{
+// 		//fprintf(log_file, "%d\t%d\t%f\t \n", slot_count/2, rb_count, 10*log10(*it));
+// 		fprintf(log_file, "%llu\t%llu\t%d\t%f\t \n",(long long unsigned )slot_count/8+1, (long long unsigned )slot_count%8+1, rb_count, 10*log10(*it));
+// 		rb_count++;
+// 		it++;
+// 	}
+// 	fflush(log_file);
+// 	fclose(log_file);
+// 	//phyStats->ReportInterferenceTrace (imsi, sinr);
+// }
 
-void
-MmWavePhyRxTrace::ReportInterferenceTrace (uint64_t imsi, SpectrumValue& sinr)
-{
-	uint64_t slot_count = Now().GetMicroSeconds ()/125;
-	uint32_t rb_count = 1;
-	FILE* log_file;
-	char fname[255];
-	sprintf(fname, "UE_%llu_SINR_dB.txt", (long long unsigned ) imsi);
-	log_file = fopen(fname, "a");
-	Values::iterator it = sinr.ValuesBegin();
-	while(it!=sinr.ValuesEnd())
-	{
-		//fprintf(log_file, "%d\t%d\t%f\t \n", slot_count/2, rb_count, 10*log10(*it));
-		fprintf(log_file, "%llu\t%llu\t%d\t%f\t \n",(long long unsigned) slot_count/8+1, (long long unsigned) slot_count%8+1, rb_count, 10*log10(*it));
-		rb_count++;
-		it++;
-	}
-	fflush(log_file);
-	fclose(log_file);
-}
+// void
+// MmWavePhyRxTrace::ReportInterferenceTrace (uint64_t imsi, SpectrumValue& sinr)
+// {
+// 	uint64_t slot_count = Now().GetMicroSeconds ()/125;
+// 	uint32_t rb_count = 1;
+// 	FILE* log_file;
+// 	char fname[255];
+// 	sprintf(fname, "UE_%llu_SINR_dB.txt", (long long unsigned ) imsi);
+// 	log_file = fopen(fname, "a");
+// 	Values::iterator it = sinr.ValuesBegin();
+// 	while(it!=sinr.ValuesEnd())
+// 	{
+// 		//fprintf(log_file, "%d\t%d\t%f\t \n", slot_count/2, rb_count, 10*log10(*it));
+// 		fprintf(log_file, "%llu\t%llu\t%d\t%f\t \n",(long long unsigned) slot_count/8+1, (long long unsigned) slot_count%8+1, rb_count, 10*log10(*it));
+// 		rb_count++;
+// 		it++;
+// 	}
+// 	fflush(log_file);
+// 	fclose(log_file);
+// }
 
-void
-MmWavePhyRxTrace::ReportPowerTrace (uint64_t imsi, SpectrumValue& power)
-{
+// void
+// MmWavePhyRxTrace::ReportPowerTrace (uint64_t imsi, SpectrumValue& power)
+// {
 
-	uint32_t slot_count = Now().GetMicroSeconds ()/125;
-	uint32_t rb_count = 1;
-	FILE* log_file;
-	char fname[255];
-	printf (fname, "UE_%llu_ReceivedPower_dB.txt", (long long unsigned) imsi);
-	log_file = fopen(fname, "a");
-	Values::iterator it = power.ValuesBegin();
-	while(it!=power.ValuesEnd())
-	{
-		fprintf(log_file, "%llu\t%llu\t%d\t%f\t \n",(long long unsigned) slot_count/8+1,(long long unsigned) slot_count%8+1, rb_count, 10*log10(*it));
-		rb_count++;
-		it++;
-	}
-	fflush(log_file);
-	fclose(log_file);
-}
+// 	uint32_t slot_count = Now().GetMicroSeconds ()/125;
+// 	uint32_t rb_count = 1;
+// 	FILE* log_file;
+// 	char fname[255];
+// 	printf (fname, "UE_%llu_ReceivedPower_dB.txt", (long long unsigned) imsi);
+// 	log_file = fopen(fname, "a");
+// 	Values::iterator it = power.ValuesBegin();
+// 	while(it!=power.ValuesEnd())
+// 	{
+// 		fprintf(log_file, "%llu\t%llu\t%d\t%f\t \n",(long long unsigned) slot_count/8+1,(long long unsigned) slot_count%8+1, rb_count, 10*log10(*it));
+// 		rb_count++;
+// 		it++;
+// 	}
+// 	fflush(log_file);
+// 	fclose(log_file);
+// }
 
 void
 MmWavePhyRxTrace::ReportPacketCountUeCallback (Ptr<MmWavePhyRxTrace> phyStats, std::string path,
 			UePhyPacketCountParameter param)
 {
-	phyStats->ReportPacketCountUe (param);
+  //phyStats->ReportPacketCountUe (param);
 }
 void
 MmWavePhyRxTrace::ReportPacketCountEnbCallback (Ptr<MmWavePhyRxTrace> phyStats, std::string path,
 		EnbPhyPacketCountParameter param)
 {
-	phyStats->ReportPacketCountEnb (param);
+  //phyStats->ReportPacketCountEnb (param);
 }
 
 void
 MmWavePhyRxTrace::ReportDownLinkTBSize (Ptr<MmWavePhyRxTrace> phyStats, std::string path,
 		uint64_t imsi, uint64_t tbSize)
 {
-	phyStats->ReportDLTbSize (imsi, tbSize);
+  //phyStats->ReportDLTbSize (imsi, tbSize);
 }
 
 
 
-void
-MmWavePhyRxTrace::ReportPacketCountUe (UePhyPacketCountParameter param)
-{
-	FILE* log_file;
-	char fname[255];
-	sprintf (fname,"UE_%llu_Packet_Trace.txt", (long long unsigned) param.m_imsi);
-	log_file = fopen (fname, "a");
-	if (param.m_isTx)
-	{
-		fprintf (log_file, "%d\t%d\t%d\n", param.m_subframeno, param.m_noBytes, 0);
-	}
-	else
-	{
-		fprintf (log_file, "%d\t%d\t%d\n", param.m_subframeno, 0, param.m_noBytes);
-	}
+// void
+// MmWavePhyRxTrace::ReportPacketCountUe (UePhyPacketCountParameter param)
+// {
+// 	FILE* log_file;
+// 	char fname[255];
+// 	sprintf (fname,"UE_%llu_Packet_Trace.txt", (long long unsigned) param.m_imsi);
+// 	log_file = fopen (fname, "a");
+// 	if (param.m_isTx)
+// 	{
+// 		fprintf (log_file, "%d\t%d\t%d\n", param.m_subframeno, param.m_noBytes, 0);
+// 	}
+// 	else
+// 	{
+// 		fprintf (log_file, "%d\t%d\t%d\n", param.m_subframeno, 0, param.m_noBytes);
+// 	}
 
-	fflush(log_file);
-	fclose(log_file);
+// 	fflush(log_file);
+// 	fclose(log_file);
 
-}
+// }
 
-void
-MmWavePhyRxTrace::ReportPacketCountEnb (EnbPhyPacketCountParameter param)
-{
-	FILE* log_file;
-	char fname[255];
-	sprintf (fname,"BS_%llu_Packet_Trace.txt",(long long unsigned) param.m_cellId);
-	log_file = fopen (fname, "a");
-	if (param.m_isTx)
-	{
-		fprintf (log_file, "%d\t%d\t%d\n", param.m_subframeno, param.m_noBytes, 0);
-	}
-	else
-	{
-		fprintf (log_file, "%d\t%d\t%d\n", param.m_subframeno, 0, param.m_noBytes);
-	}
+// void
+// MmWavePhyRxTrace::ReportPacketCountEnb (EnbPhyPacketCountParameter param)
+// {
+// 	FILE* log_file;
+// 	char fname[255];
+// 	sprintf (fname,"BS_%llu_Packet_Trace.txt",(long long unsigned) param.m_cellId);
+// 	log_file = fopen (fname, "a");
+// 	if (param.m_isTx)
+// 	{
+// 		fprintf (log_file, "%d\t%d\t%d\n", param.m_subframeno, param.m_noBytes, 0);
+// 	}
+// 	else
+// 	{
+// 		fprintf (log_file, "%d\t%d\t%d\n", param.m_subframeno, 0, param.m_noBytes);
+// 	}
 
-	fflush(log_file);
-	fclose(log_file);
-}
+// 	fflush(log_file);
+// 	fclose(log_file);
+// }
 
-void
-MmWavePhyRxTrace::ReportDLTbSize (uint64_t imsi, uint64_t tbSize)
-{
-	FILE* log_file;
-	char fname[255];
-	sprintf (fname,"UE_%llu_Tb_Size.txt", (long long unsigned) imsi);
-	log_file = fopen (fname, "a");
+// void
+// MmWavePhyRxTrace::ReportDLTbSize (uint64_t imsi, uint64_t tbSize)
+// {
+// 	FILE* log_file;
+// 	char fname[255];
+// 	sprintf (fname,"UE_%llu_Tb_Size.txt", (long long unsigned) imsi);
+// 	log_file = fopen (fname, "a");
 
-	fprintf (log_file, "%llu \t %llu\n", (long long unsigned )Now().GetMicroSeconds (), (long long unsigned )tbSize);
-	fprintf (log_file, "%lld \t %llu \n",(long long int) Now().GetMicroSeconds (), (long long unsigned) tbSize);
-	fflush(log_file);
-	fclose(log_file);
-}
+// 	fprintf (log_file, "%llu \t %llu\n", (long long unsigned )Now().GetMicroSeconds (), (long long unsigned )tbSize);
+// 	fprintf (log_file, "%lld \t %llu \n",(long long int) Now().GetMicroSeconds (), (long long unsigned) tbSize);
+// 	fflush(log_file);
+// 	fclose(log_file);
+// }
 
 void
 MmWavePhyRxTrace::RxPacketTraceUeCallback (Ptr<MmWavePhyRxTrace> phyStats, std::string path, RxPacketTraceParams params)
