@@ -20,6 +20,10 @@
 [U|R]x[A-Z][a-z]*Stats.txt
 [D|U]l[A-Z][a-z]*Trace.txt
 [U|R]x[A-Z][a-z]*Trace.txt
+[D|U]l[A-Z][a-z]*Stats.csv
+[U|R]x[A-Z][a-z]*Stats.csv
+[D|U]l[A-Z][a-z]*Trace.csv
+[U|R]x[A-Z][a-z]*Trace.csv
 seventh-packet-byte-count.png
 
 \#*#
