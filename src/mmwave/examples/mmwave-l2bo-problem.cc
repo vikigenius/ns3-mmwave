@@ -345,7 +345,7 @@ int main (int argc, char* argv[])
   building2 = Create<Building> ();
   building2->SetBoundaries (Box(60.0,61.5,9.5,12.0,0.0,3.5));
 
-  Ptr<Building> building3;
+  Ptr<Building> building3; //Reaches around 9 ms for 80 init
   building3 = Create<Building> ();
   building3->SetBoundaries (Box(54.0,55.5,6.0,8.5,0.0,3.5));
   
@@ -378,7 +378,7 @@ int main (int argc, char* argv[])
   uemobility.SetMobilityModel ("ns3::ConstantVelocityMobilityModel");
   uemobility.Install (ueNodes);
 
-  ueNodes.Get (0)->GetObject<MobilityModel> ()->SetPosition (Vector (80, -0.2, 1));
+  ueNodes.Get (0)->GetObject<MobilityModel> ()->SetPosition (Vector (90, -0.2, 1));
   ueNodes.Get (0)->GetObject<ConstantVelocityMobilityModel> ()->SetVelocity (Vector (0, 0, 0));
 
   Simulator::Schedule (Seconds (2), &ChangeSpeed, ueNodes.Get (0), Vector (0, 1.5, 0));

@@ -187,6 +187,14 @@ LteRlcAm::GetTypeId (void)
                    StringValue ("RlcAmBufferSizeStats.txt"),
                    MakeStringAccessor (&LteRlcAm::SetBufferSizeFilename),
                    MakeStringChecker ())
+    .AddTraceSource("TxAmPDU",
+                    "PDU transmitted",
+                    MakeTraceSourceAccessor(&LteRlcAm::m_txAmPdu),
+                    "ns3::LteRlcAm::TransmitTracedCallback")
+    .AddTraceSource("RxAmPDU",
+                    "PDU Received",
+                    MakeTraceSourceAccessor(&LteRlcAm::m_rxAmPdu),
+                    "ns3::LteRlcAm::TransmitTracedCallback")
     .AddTraceSource("RetxPDU",
                     "PDU Retransmitted",
                     MakeTraceSourceAccessor(&LteRlcAm::m_retxPdu),
@@ -1088,7 +1096,8 @@ LteRlcAm::DoNotifyTxOpportunity (uint32_t bytes, uint8_t layer, uint8_t harqId)
   RlcTag rlcTag (Simulator::Now ());
   packet->AddByteTag (rlcTag);
   m_txPdu (m_rnti, m_lcid, packet->GetSize ());
-
+  m_txAmPdu (m_rnti, m_lcid, packet);
+  
   // Send RLC PDU to MAC layer
   LteMacSapProvider::TransmitPduParameters params;
   params.pdu = packet;
@@ -1785,7 +1794,7 @@ LteRlcAm::DoReceivePdu (Ptr<Packet> p)
       delay = Simulator::Now() - rlcTag.GetSenderTimestamp ();
     }
   m_rxPdu (m_rnti, m_lcid, p->GetSize (), delay.GetNanoSeconds ());
-
+  m_rxAmPdu (m_rnti, m_lcid, p);
   // Get RLC header parameters
   LteRlcAmHeader rlcAmHeader;
   p->PeekHeader (rlcAmHeader);

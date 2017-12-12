@@ -142,17 +142,43 @@ public:
   std::string GetDlPdcpOutputFilename (void);
 
   /**
-   * Set the name of the file where the uplink RLC Retx statistics will be stored.
+   * Set the name of the file where the uplink RLC Tx statistics for AM will be stored.
    *
    * @param outputFilename string with the name of the file
    */
-  void SetUlRetxOutputFilename (std::string outputFilename);
+  void SetDlTxAmOutputFilename (std::string outputFilename);
+
+  /**
+   * Get the name of the file where the uplink RLC Tx statistics for AM will be stored.
+   * @return the name of the file where the uplink RLC Retx statistics will be stored
+   */
+  std::string GetDlTxAmOutputFilename (void);
+  
+  /**
+   * Set the name of the file where the downlink RLC Retx statistics will be stored.
+   *
+   * @param outputFilename string with the name of the file
+   */
+  void SetDlRetxOutputFilename (std::string outputFilename);
 
   /**
    * Get the name of the file where the uplink RLC Retx statistics will be stored.
    * @return the name of the file where the uplink RLC Retx statistics will be stored
    */
-  std::string GetUlRetxOutputFilename (void);
+  std::string GetDlRetxOutputFilename (void);
+
+  /**
+   * Set the name of the file where the downlink RLC Rx statistics for AM will be stored.
+   *
+   * @param outputFilename string with the name of the file
+   */
+  void SetDlRxAmOutputFilename (std::string outputFilename);
+
+  /**
+   * Get the name of the file where the downlink RLC Rx statistics for AM will be stored.
+   * @return the name of the file where the downlink RLC Rx statistics for AM will be stored
+   */
+  std::string GetDlRxAmOutputFilename (void);
 
   /**
    * Set the name of the file where the uplink RLC Retx statistics will be stored.
@@ -203,6 +229,18 @@ public:
   UlTxPdu (uint16_t cellId, uint64_t imsi, uint16_t rnti, uint8_t lcid, uint32_t packetSize);
 
   /**
+   * Notifies the stats calculator that an downlink transmission has occurred.
+   * @param device The Radio Entity
+   * @param cellId CellId of the attached Enb
+   * @param imsi IMSI of the UE who transmitted the PDU
+   * @param rnti C-RNTI of the UE who transmitted the PDU
+   * @param lcid LCID through which the PDU has been transmitted
+   * @param packet The PDU being transmitted
+   */
+  void
+  DlTxAmPdu (std::string device, uint16_t cellId, uint64_t imsi, uint16_t rnti, uint8_t lcid, Ptr<const Packet> packet);
+  
+  /**
    * Notifies the stats calculator that an uplink reception has occurred.
    * @param cellId CellId of the attached Enb
    * @param imsi IMSI of the UE who received the PDU
@@ -238,6 +276,18 @@ public:
   DlRxPdu (uint16_t cellId, uint64_t imsi, uint16_t rnti, uint8_t lcid, uint32_t packetSize, uint64_t delay);
 
   /**
+   * Notifies the stats calculator that a downlink reception has occurred.
+   * @param device The Radio Entity
+   * @param cellId CellId of the attached Enb
+   * @param imsi IMSI of the UE who transmitted the PDU
+   * @param rnti C-RNTI of the UE who transmitted the PDU
+   * @param lcid LCID through which the PDU has been transmitted
+   * @param packet The PDU being transmitted
+   */
+  void
+  DlRxAmPdu (std::string device, uint16_t cellId, uint64_t imsi, uint16_t rnti, uint8_t lcid, Ptr<const Packet> packet);
+
+  /**
    * Notifies the stats calculator that an uplink reception has occurred.
    * @param device Identifies entity as UE or ENB
    * @param cellId CellId of the attached Enb
@@ -248,7 +298,7 @@ public:
    * @param retxCount The number of times the PDU has been retransmitted
    */
   void
-  UlRetxPdu (std::string device, uint16_t cellId, uint64_t imsi, uint16_t rnti, uint8_t lcid, Ptr<const Packet> packet, uint16_t retxCount);
+  DlRetxPdu (std::string device, uint16_t cellId, uint64_t imsi, uint16_t rnti, uint8_t lcid, Ptr<const Packet> packet, uint16_t retxCount);
 
   /**
    * Notifies the stats calculator that an uplink reception has occurred.
@@ -510,9 +560,19 @@ private:
   std::string m_ulPdcpOutputFilename;
 
   /**
+   * Name of the file where the uplink RLC Tx statistics for AM will be saved
+   */
+  std::string m_dlTxAmOutputFilename;
+
+  /**
    * Name of the file where the uplink RLC Retx statistics will be saved
    */
   std::string m_ulRetxOutputFilename;
+
+  /**
+   * Name of the file where the downlink RLC Rx statistics for AM will be saved
+   */
+  std::string m_dlRxAmOutputFilename;
 
   /**
    * Name of the file where the RLC Buffer statistics will be saved
@@ -520,7 +580,9 @@ private:
   std::string m_dlRlcBufferOutputFilename;
 
   std::ofstream m_dlOutFile;
+  std::ofstream m_dlRxAmFile;
   std::ofstream m_ulOutFile;
+  std::ofstream m_dlTxAmFile;
   std::ofstream m_ulRetxFile;
   std::ofstream m_dlBufferFile;
 };

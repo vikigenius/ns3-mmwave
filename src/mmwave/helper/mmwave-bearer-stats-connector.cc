@@ -136,6 +136,23 @@ DlRxPduCallback (Ptr<MmWaveBoundCallbackArgument> arg, std::string path,
 }
 
 /**
+ * Callback function for UL Retx statistics for RLC
+ * /param arg
+ * /param path
+ * /param rnti
+ * /param lcid
+ * /param packet
+ */
+void
+DlRxAmPduCallback (Ptr<MmWaveBoundCallbackArgument> arg, std::string path,
+                   uint16_t rnti, uint8_t lcid, Ptr<const Packet> packet)
+{
+  NS_LOG_FUNCTION (path << rnti << (uint16_t)lcid << packet->GetSize());
+ 
+  arg->stats->DlRxAmPdu (arg->getRadioEntityName(), arg->cellId, arg->imsi, rnti, lcid, packet);
+}
+         
+/**
  * Callback function for UL TX statistics for both RLC and PDCP
  * /param arg
  * /param path
@@ -152,6 +169,23 @@ UlTxPduCallback (Ptr<MmWaveBoundCallbackArgument> arg, std::string path,
   arg->stats->UlTxPdu (arg->cellId, arg->imsi, rnti, lcid, packetSize);
 }
 
+/**
+ * Callback function for UL Retx statistics for RLC
+ * /param arg
+ * /param path
+ * /param rnti
+ * /param lcid
+ * /param packet
+ */
+void
+DlTxAmPduCallback (Ptr<MmWaveBoundCallbackArgument> arg, std::string path,
+                   uint16_t rnti, uint8_t lcid, Ptr<const Packet> packet)
+{
+  NS_LOG_FUNCTION (path << rnti << (uint16_t)lcid << packet->GetSize());
+ 
+  arg->stats->DlTxAmPdu (arg->getRadioEntityName(), arg->cellId, arg->imsi, rnti, lcid, packet);
+}
+         
 /**
  * Callback function for UL RX statistics for both RLC and PDCP
  * /param arg
@@ -195,12 +229,12 @@ SwitchToMmWaveCallback (Ptr<McMmWaveBoundCallbackArgument> arg, std::string path
  * /param delay
  */
 void
-UlRetxPduCallback (Ptr<MmWaveBoundCallbackArgument> arg, std::string path,
+DlRetxPduCallback (Ptr<MmWaveBoundCallbackArgument> arg, std::string path,
                    uint16_t rnti, uint8_t lcid, Ptr<const Packet> packet, uint16_t retxCount)
 {
   NS_LOG_FUNCTION (path << rnti << (uint16_t)lcid << packet->GetSize() << retxCount);
  
-  arg->stats->UlRetxPdu (arg->getRadioEntityName(), arg->cellId, arg->imsi, rnti, lcid, packet, retxCount);
+  arg->stats->DlRetxPdu (arg->getRadioEntityName(), arg->cellId, arg->imsi, rnti, lcid, packet, retxCount);
 }
 
 /**
@@ -218,7 +252,7 @@ DlRlcBufferPduCallback (Ptr<MmWaveBoundCallbackArgument> arg, std::string path,
 {
   NS_LOG_FUNCTION (path << rnti << (uint16_t)lcid << packet->GetSize() << retxCount);
  
-  arg->stats->UlRetxPdu (arg->getRadioEntityName(), arg->cellId, arg->imsi, rnti, lcid, packet, retxCount);
+  arg->stats->DlRetxPdu (arg->getRadioEntityName(), arg->cellId, arg->imsi, rnti, lcid, packet, retxCount);
 }
 
 /**
@@ -784,13 +818,15 @@ MmWaveBearerStatsConnector::ConnectTracesUe (std::string context, uint64_t imsi,
       Config::Connect (basePath + "/DataRadioBearerMap/*/LteRlc/RxPDU",
 		       MakeBoundCallback (&DlRxPduCallback, arg));
       Config::Connect (basePath + "/DataRadioBearerMap/*/LteRlc/$ns3::LteRlcAm/RetxPDU",
-		       MakeBoundCallback (&UlRetxPduCallback, arg));
+		       MakeBoundCallback (&DlRetxPduCallback, arg));
       Config::Connect (basePath + "/DataRadioBearerMap/*/LteRlc/$ns3::LteRlcAm/RecvBuffer",
 		       MakeBoundCallback (&DlRlcBufferCallback, arg));
       Config::Connect (basePath + "/Srb1/LteRlc/TxPDU",
 		       MakeBoundCallback (&UlTxPduCallback, arg));
       Config::Connect (basePath + "/Srb1/LteRlc/RxPDU",
 		       MakeBoundCallback (&DlRxPduCallback, arg));
+      Config::Connect (basePath + "/DataRadioBearerMap/*/LteRlc/$ns3::LteRlcAm/RxAmPDU",
+		       MakeBoundCallback (&DlRxAmPduCallback, arg));      
       // for MC devices
       Config::Disconnect (basePath + "/DataRadioRlcMap/LteRlc/TxPDU",
            MakeBoundCallback (&UlTxPduCallback, arg));
@@ -846,8 +882,10 @@ MmWaveBearerStatsConnector::ConnectTracesEnb (std::string context, uint64_t imsi
 		       MakeBoundCallback (&UlRxPduCallback, arg));
       Config::Connect (basePath.str () + "/DataRadioBearerMap/*/LteRlc/TxPDU",
 		       MakeBoundCallback (&DlTxPduCallback, arg));
-      Config::Connect (basePath.str () + "/DataRadioBearerMap/*/LteRlc/$ns3::LteRlcAm/RetxPDU",
-		       MakeBoundCallback (&UlRetxPduCallback, arg));
+      Config::Connect (basePath.str () + "/DataRadioBearerMap/*/LteRlc/$ns3::LteRlcAm/TxAmPDU",
+		       MakeBoundCallback (&DlTxAmPduCallback, arg));
+      Config::Connect (basePath.str () + "/DataRadioBearerMap/*/LteRlc/$ns3::LteRlcAm/TxAmPDU",
+		       MakeBoundCallback (&DlRetxPduCallback, arg));
       Config::Connect (basePath.str () + "/DataRadioBearerMap/*/LteRlc/$ns3::LteRlcAm/RecvBuffer",
 		       MakeBoundCallback (&DlRlcBufferCallback, arg));
       Config::Connect (basePath.str () + "/Srb0/LteRlc/RxPDU",

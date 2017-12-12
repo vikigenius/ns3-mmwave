@@ -103,10 +103,20 @@ MmWaveBearerStatsCalculator::GetTypeId (void)
                    StringValue ("UlPdcpStats.txt"),
                    MakeStringAccessor (&MmWaveBearerStatsCalculator::SetUlPdcpOutputFilename),
                    MakeStringChecker ())
-    .AddAttribute ("UlRlcRetxOutputFilename",
-                   "Name of the file where the uplink Rlc Retx results will be saved.",
-                   StringValue ("UlRlcRetxStats.txt"),
-                   MakeStringAccessor (&MmWaveBearerStatsCalculator::SetUlRetxOutputFilename),
+    .AddAttribute ("DlTxAmOutputFilename",
+                   "Name of the file where the downlink Rlc Tx results for AM will be saved.",
+                   StringValue ("DlTxAmStats.txt"),
+                   MakeStringAccessor (&MmWaveBearerStatsCalculator::SetDlTxAmOutputFilename),
+                   MakeStringChecker ())
+    .AddAttribute ("DlRxAmOutputFilename",
+                   "Name of the file where the downlink Rlc Rx results for AM will be saved.",
+                   StringValue ("DlRxAmStats.txt"),
+                   MakeStringAccessor (&MmWaveBearerStatsCalculator::SetDlRxAmOutputFilename),
+                   MakeStringChecker ())
+    .AddAttribute ("DlRlcRetxOutputFilename",
+                   "Name of the file where the downlink Rlc Retx results will be saved.",
+                   StringValue ("DlRlcRetxStats.txt"),
+                   MakeStringAccessor (&MmWaveBearerStatsCalculator::SetDlRetxOutputFilename),
                    MakeStringChecker ())
     .AddAttribute ("DlRlcBufferOutputFilename",
                    "Name of the file where the Rlc Buffer results will be saved.",
@@ -221,6 +231,24 @@ MmWaveBearerStatsCalculator::DlTxPdu (uint16_t cellId, uint64_t imsi, uint16_t r
 }
 
 void
+MmWaveBearerStatsCalculator::DlTxAmPdu (std::string device, uint16_t cellId, uint64_t imsi, uint16_t rnti, uint8_t lcid, Ptr<const Packet> packet)
+{
+  NS_LOG_FUNCTION (this << "DlTxAmPDU" << cellId << imsi << rnti << (uint32_t) lcid << packet->GetSize());
+
+  if (!m_dlTxAmFile.is_open ())
+  {
+  	m_dlTxAmFile.open (GetDlTxAmOutputFilename ().c_str (), std::ios_base::app);
+  }
+
+  LteRlcAmHeader rlcHeader;
+  //Debug Code TODO: Remove Later
+  packet->PeekHeader(rlcHeader);
+  SequenceNumber10 rlcSeq = rlcHeader.GetSequenceNumber();
+
+  m_ulRetxFile << (Simulator::Now ()).GetSeconds () << " " << device << " " << cellId << " " << imsi << " " << rnti << " " << (uint32_t)lcid << " " << rlcSeq.GetValue() << " " << packet->GetSize() << " " << std::endl;
+}
+
+void
 MmWaveBearerStatsCalculator::UlRxPdu (uint16_t cellId, uint64_t imsi, uint16_t rnti, uint8_t lcid, uint32_t packetSize,
                                      uint64_t delay)
 {
@@ -264,13 +292,31 @@ MmWaveBearerStatsCalculator::UlRxPdu (uint16_t cellId, uint64_t imsi, uint16_t r
 }
 
 void
-MmWaveBearerStatsCalculator::UlRetxPdu (std::string device, uint16_t cellId, uint64_t imsi, uint16_t rnti, uint8_t lcid, Ptr<const Packet> packet, uint16_t retxCount)
+MmWaveBearerStatsCalculator::DlRxAmPdu (std::string device, uint16_t cellId, uint64_t imsi, uint16_t rnti, uint8_t lcid, Ptr<const Packet> packet)
+{
+  NS_LOG_FUNCTION (this << "DlRxAmPDU" << cellId << imsi << rnti << (uint32_t) lcid << packet->GetSize());
+
+  if (!m_dlRxAmFile.is_open ())
+  {
+  	m_dlRxAmFile.open (GetDlRxAmOutputFilename ().c_str (), std::ios_base::app);
+  }
+
+  LteRlcAmHeader rlcHeader;
+  //Debug Code TODO: Remove Later
+  packet->PeekHeader(rlcHeader);
+  SequenceNumber10 rlcSeq = rlcHeader.GetSequenceNumber();
+
+  m_ulRetxFile << (Simulator::Now ()).GetSeconds () << " " << device << " " << cellId << " " << imsi << " " << rnti << " " << (uint32_t)lcid << " " << rlcSeq.GetValue() << " " << packet->GetSize() << " " << std::endl;
+}
+
+void
+MmWaveBearerStatsCalculator::DlRetxPdu (std::string device, uint16_t cellId, uint64_t imsi, uint16_t rnti, uint8_t lcid, Ptr<const Packet> packet, uint16_t retxCount)
 {
   NS_LOG_FUNCTION (this << "UlRxPDU" << cellId << imsi << rnti << (uint32_t) lcid << packet->GetSize() << retxCount);
 
   if (!m_ulRetxFile.is_open ())
   {
-  	m_ulRetxFile.open (GetUlRetxOutputFilename ().c_str (), std::ios_base::app);
+  	m_ulRetxFile.open (GetDlRetxOutputFilename ().c_str (), std::ios_base::app);
   }
 
   LteRlcAmHeader rlcHeader;
@@ -780,15 +826,39 @@ MmWaveBearerStatsCalculator::GetDlPdcpOutputFilename (void)
 }
 
 void
-MmWaveBearerStatsCalculator::SetUlRetxOutputFilename (std::string outputFilename)
+MmWaveBearerStatsCalculator::SetDlTxAmOutputFilename (std::string outputFilename)
+{
+  m_dlTxAmOutputFilename = outputFilename;
+}
+
+std::string
+MmWaveBearerStatsCalculator::GetDlTxAmOutputFilename (void)
+{
+  return m_dlTxAmOutputFilename;
+}
+
+void
+MmWaveBearerStatsCalculator::SetDlRetxOutputFilename (std::string outputFilename)
 {
   m_ulRetxOutputFilename = outputFilename;
 }
 
 std::string
-MmWaveBearerStatsCalculator::GetUlRetxOutputFilename (void)
+MmWaveBearerStatsCalculator::GetDlRetxOutputFilename (void)
 {
   return m_ulRetxOutputFilename;
+}
+
+void
+MmWaveBearerStatsCalculator::SetDlRxAmOutputFilename (std::string outputFilename)
+{
+  m_dlRxAmOutputFilename = outputFilename;
+}
+
+std::string
+MmWaveBearerStatsCalculator::GetDlRxAmOutputFilename (void)
+{
+  return m_dlRxAmOutputFilename;
 }
 
 void

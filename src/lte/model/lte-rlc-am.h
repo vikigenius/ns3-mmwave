@@ -146,6 +146,29 @@ private:
   std::string GetBufferSizeFilename();
   void SetBufferSizeFilename(std::string filename);
   void BufferSizeTrace();
+
+  /**
+   * TracedCallback signature for
+   *
+   * \param [in] rnti C-RNTI scheduled.
+   * \param [in] lcid The logical channel id corresponding to
+   *             the sending RLC instance.
+   * \param [in] the retransmitted pdu.
+   */
+  typedef void (* TransmitTracedCallback)
+  (uint16_t rnti, uint8_t lcid, Ptr<const Packet> txPdu);
+  
+  /**
+   * TracedCallback signature for
+   *
+   * \param [in] rnti C-RNTI scheduled.
+   * \param [in] lcid The logical channel id corresponding to
+   *             the sending RLC instance.
+   * \param [in] the retransmitted pdu.
+   */
+  typedef void (* ReceiveTracedCallback)
+  (uint16_t rnti, uint8_t lcid, Ptr<const Packet> rxPdu);
+  
   /**
    * TracedCallback signature for
    *
@@ -157,7 +180,7 @@ private:
    */
   typedef void (* RetransmitTracedCallback)
   (uint16_t rnti, uint8_t lcid, Ptr<const Packet> retxPdu, uint16_t retxCount);
-
+  
   /**
    * TracedCallback signature for
    *
@@ -307,9 +330,20 @@ private:
   bool m_enableAqm;
 
   /**
+   * Used to inform of a PDU transmission from the MAC SAP user
+   */
+  TracedCallback<uint16_t, uint8_t, Ptr<const Packet>> m_txAmPdu;
+
+  /**
+   * Used to inform of a PDU reception from the MAC SAP user
+   */
+  TracedCallback<uint16_t, uint8_t, Ptr<const Packet>> m_rxAmPdu;
+
+  /**
    * Used to inform of a PDU retransmission from the MAC SAP user
    */
   TracedCallback<uint16_t, uint8_t, Ptr<const Packet>, uint16_t > m_retxPdu;
+
   /**
    * Used to inform of a complete PDU being placed in the retransmission buffer
    */
