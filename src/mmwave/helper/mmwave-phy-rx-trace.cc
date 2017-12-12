@@ -224,7 +224,7 @@ MmWavePhyRxTrace::RxPacketTraceUeCallback (Ptr<MmWavePhyRxTrace> phyStats, std::
 {
 	if (!m_rxPacketTraceFile.is_open())
 	{
-		m_rxPacketTraceFilename = "RxPacketTrace.csv";
+		m_rxPacketTraceFilename = "RxPacketTrace.txt";
 		m_rxPacketTraceFile.open(m_rxPacketTraceFilename.c_str ());
 		m_rxPacketTraceFile << "dir,time,frame,subF,1stSym,symbolno,cellId,rnti,tbSize,mcs,rv,SINR(dB),corrupt,TBler" << std::endl;
 		if (!m_rxPacketTraceFile.is_open())

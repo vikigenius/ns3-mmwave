@@ -884,7 +884,7 @@ MmWaveBearerStatsConnector::ConnectTracesEnb (std::string context, uint64_t imsi
 		       MakeBoundCallback (&DlTxPduCallback, arg));
       Config::Connect (basePath.str () + "/DataRadioBearerMap/*/LteRlc/$ns3::LteRlcAm/TxAmPDU",
 		       MakeBoundCallback (&DlTxAmPduCallback, arg));
-      Config::Connect (basePath.str () + "/DataRadioBearerMap/*/LteRlc/$ns3::LteRlcAm/TxAmPDU",
+      Config::Connect (basePath.str () + "/DataRadioBearerMap/*/LteRlc/$ns3::LteRlcAm/RetxPDU",
 		       MakeBoundCallback (&DlRetxPduCallback, arg));
       Config::Connect (basePath.str () + "/DataRadioBearerMap/*/LteRlc/$ns3::LteRlcAm/RecvBuffer",
 		       MakeBoundCallback (&DlRlcBufferCallback, arg));

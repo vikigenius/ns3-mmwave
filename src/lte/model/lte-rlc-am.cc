@@ -194,7 +194,7 @@ LteRlcAm::GetTypeId (void)
     .AddTraceSource("RxAmPDU",
                     "PDU Received",
                     MakeTraceSourceAccessor(&LteRlcAm::m_rxAmPdu),
-                    "ns3::LteRlcAm::TransmitTracedCallback")
+                    "ns3::LteRlcAm::ReceiveTracedCallback")
     .AddTraceSource("RetxPDU",
                     "PDU Retransmitted",
                     MakeTraceSourceAccessor(&LteRlcAm::m_retxPdu),
