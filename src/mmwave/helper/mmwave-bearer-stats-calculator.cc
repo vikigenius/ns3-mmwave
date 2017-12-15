@@ -33,6 +33,7 @@
 #include "mmwave-bearer-stats-calculator.h"
 #include "ns3/string.h"
 #include "ns3/nstime.h"
+#include "ns3/lte-rlc-tag.h"
 #include <ns3/tcp-header.h>
 #include <ns3/lte-rlc-am-header.h>
 #include <ns3/log.h>
@@ -43,7 +44,13 @@ namespace ns3 {
 
 NS_LOG_COMPONENT_DEFINE ("MmWaveBearerStatsCalculator");
 
-NS_OBJECT_ENSURE_REGISTERED ( MmWaveBearerStatsCalculator);
+NS_OBJECT_ENSURE_REGISTERED (MmWaveBearerStatsCalculator);
+
+static bool is_file_empty(std::string filename)
+{
+  std::ifstream testStream(filename);
+  return testStream.peek() == std::ifstream::traits_type::eof();
+}         
 
 MmWaveBearerStatsCalculator::MmWaveBearerStatsCalculator ()
   : m_firstWrite (true),
@@ -105,22 +112,22 @@ MmWaveBearerStatsCalculator::GetTypeId (void)
                    MakeStringChecker ())
     .AddAttribute ("DlTxAmOutputFilename",
                    "Name of the file where the downlink Rlc Tx results for AM will be saved.",
-                   StringValue ("DlTxAmStats.txt"),
+                   StringValue ("DlTxAmStats.csv"),
                    MakeStringAccessor (&MmWaveBearerStatsCalculator::SetDlTxAmOutputFilename),
                    MakeStringChecker ())
     .AddAttribute ("DlRxAmOutputFilename",
                    "Name of the file where the downlink Rlc Rx results for AM will be saved.",
-                   StringValue ("DlRxAmStats.txt"),
+                   StringValue ("DlRxAmStats.csv"),
                    MakeStringAccessor (&MmWaveBearerStatsCalculator::SetDlRxAmOutputFilename),
                    MakeStringChecker ())
     .AddAttribute ("DlRlcRetxOutputFilename",
                    "Name of the file where the downlink Rlc Retx results will be saved.",
-                   StringValue ("DlRlcRetxStats.txt"),
+                   StringValue ("DlRlcRetxStats.csv"),
                    MakeStringAccessor (&MmWaveBearerStatsCalculator::SetDlRetxOutputFilename),
                    MakeStringChecker ())
     .AddAttribute ("DlRlcBufferOutputFilename",
                    "Name of the file where the Rlc Buffer results will be saved.",
-                   StringValue ("DlRlcBufferStats.txt"),
+                   StringValue ("DlRlcBufferStats.csv"),
                    MakeStringAccessor (&MmWaveBearerStatsCalculator::SetDlRlcBufferOutputFilename),
                    MakeStringChecker ())
   ;
@@ -235,17 +242,21 @@ MmWaveBearerStatsCalculator::DlTxAmPdu (std::string device, uint16_t cellId, uin
 {
   NS_LOG_FUNCTION (this << "DlTxAmPDU" << cellId << imsi << rnti << (uint32_t) lcid << packet->GetSize());
 
-  if (!m_dlTxAmFile.is_open ())
-  {
-  	m_dlTxAmFile.open (GetDlTxAmOutputFilename ().c_str (), std::ios_base::app);
-  }
+  if(is_file_empty(GetDlTxAmOutputFilename()))
+    {
+      m_dlTxAmFile.open (GetDlTxAmOutputFilename ().c_str (), std::ios_base::app);
+      m_dlTxAmFile << "time,device,cellid,imsi,rnti,lcid,seq,size" << std::endl;
+    }
 
   LteRlcAmHeader rlcHeader;
   //Debug Code TODO: Remove Later
   packet->PeekHeader(rlcHeader);
-  SequenceNumber10 rlcSeq = rlcHeader.GetSequenceNumber();
-
-  m_ulRetxFile << (Simulator::Now ()).GetSeconds () << " " << device << " " << cellId << " " << imsi << " " << rnti << " " << (uint32_t)lcid << " " << rlcSeq.GetValue() << " " << packet->GetSize() << " " << std::endl;
+  //Print Data PDU only
+  if (rlcHeader.IsDataPdu())
+    {
+      SequenceNumber10 rlcSeq = rlcHeader.GetSequenceNumber();
+      m_dlTxAmFile << (Simulator::Now ()).GetSeconds () << "," << device << "," << cellId << "," << imsi << "," << rnti << "," << (uint32_t)lcid << "," << rlcSeq.GetValue() << "," << packet->GetSize() << std::endl;    
+    }
 }
 
 void
@@ -296,17 +307,29 @@ MmWaveBearerStatsCalculator::DlRxAmPdu (std::string device, uint16_t cellId, uin
 {
   NS_LOG_FUNCTION (this << "DlRxAmPDU" << cellId << imsi << rnti << (uint32_t) lcid << packet->GetSize());
 
-  if (!m_dlRxAmFile.is_open ())
-  {
-  	m_dlRxAmFile.open (GetDlRxAmOutputFilename ().c_str (), std::ios_base::app);
-  }
+  if(is_file_empty(GetDlRxAmOutputFilename()))
+    {
+      m_dlRxAmFile.open (GetDlRxAmOutputFilename ().c_str (), std::ios_base::app);
+      m_dlRxAmFile << "time,device,cellid,imsi,rnti,lcid,seq,size,delay" << std::endl;
+    }
 
   LteRlcAmHeader rlcHeader;
   //Debug Code TODO: Remove Later
   packet->PeekHeader(rlcHeader);
-  SequenceNumber10 rlcSeq = rlcHeader.GetSequenceNumber();
+  //Print Data PDU only
+  if (rlcHeader.IsDataPdu())
+    {
+      SequenceNumber10 rlcSeq = rlcHeader.GetSequenceNumber();
 
-  m_ulRetxFile << (Simulator::Now ()).GetSeconds () << " " << device << " " << cellId << " " << imsi << " " << rnti << " " << (uint32_t)lcid << " " << rlcSeq.GetValue() << " " << packet->GetSize() << " " << std::endl;
+      RlcTag tag;
+      std::ostringstream delayString;
+      if(packet->FindFirstMatchingByteTag(tag)){
+        Time delay = Simulator::Now() - tag.GetSenderTimestamp();
+        delayString << delay.GetSeconds();
+      }
+
+      m_dlRxAmFile << (Simulator::Now ()).GetSeconds () << "," << device << "," << cellId << "," << imsi << "," << rnti << "," << (uint32_t)lcid << "," << rlcSeq.GetValue() << "," << packet->GetSize() << "," << delayString.str() << std::endl;      
+    }
 }
 
 void
@@ -314,34 +337,42 @@ MmWaveBearerStatsCalculator::DlRetxPdu (std::string device, uint16_t cellId, uin
 {
   NS_LOG_FUNCTION (this << "UlRxPDU" << cellId << imsi << rnti << (uint32_t) lcid << packet->GetSize() << retxCount);
 
-  if (!m_ulRetxFile.is_open ())
-  {
-  	m_ulRetxFile.open (GetDlRetxOutputFilename ().c_str (), std::ios_base::app);
-  }
+  if(is_file_empty(GetDlRetxOutputFilename()))
+    {
+      m_dlRetxFile.open (GetDlRetxOutputFilename ().c_str (), std::ios_base::app);
+      m_dlRetxFile << "time,device,cellid,imsi,rnti,lcid,seq,size,retxcount" << std::endl;
+    }
 
   LteRlcAmHeader rlcHeader;
   //Debug Code TODO: Remove Later
   packet->PeekHeader(rlcHeader);
   SequenceNumber10 rlcSeq = rlcHeader.GetSequenceNumber();
 
-  m_ulRetxFile << (Simulator::Now ()).GetSeconds () << " " << device << " " << cellId << " " << imsi << " " << rnti << " " << (uint32_t)lcid << " " << rlcSeq.GetValue() << " " << packet->GetSize() << " " << retxCount << std::endl;
+  m_dlRetxFile << (Simulator::Now ()).GetSeconds () << "," << device << "," << cellId << "," << imsi << "," << rnti << "," << (uint32_t)lcid << "," << rlcSeq.GetValue() << "," << packet->GetSize() << "," << retxCount << std::endl;
 }
 
 void
-MmWaveBearerStatsCalculator::DlRlcBufferPdu (std::string device, uint16_t cellId, uint64_t imsi, uint16_t rnti, uint8_t lcid, Ptr<const Packet> packet, uint16_t bufferSize, SequenceNumber10 vrR, SequenceNumber10 vrH)
+MmWaveBearerStatsCalculator::DlRlcBufferPdu (std::string device, uint16_t cellId, uint64_t imsi, uint16_t rnti, uint8_t lcid, Ptr<const Packet> packet, uint16_t bufferPackets, uint64_t bufferSize, SequenceNumber10 vrR, SequenceNumber10 vrH)
 {
-  NS_LOG_FUNCTION (this << "UlRxPDU" << cellId << imsi << rnti << (uint32_t) lcid << packet->GetSize() << bufferSize << vrR << vrH);
+  NS_LOG_FUNCTION (this << "DlRlcBufferPDU" << cellId << imsi << rnti << (uint32_t) lcid << packet->GetSize() << bufferSize << vrR << vrH);
 
-  if (!m_dlBufferFile.is_open ())
-  {
-  	m_dlBufferFile.open (GetDlRlcBufferOutputFilename ().c_str (), std::ios_base::app);
-  }
+  if(is_file_empty(GetDlRlcBufferOutputFilename()))
+    {
+      m_dlBufferFile.open (GetDlRlcBufferOutputFilename ().c_str (), std::ios_base::app);
+      m_dlBufferFile << "time,device,cellid,imsi,rnti,lcid,seq,size,delay,bufferpackets,buffersize,vrr,vrh" << std::endl;
+    }
 
   LteRlcAmHeader rlcHeader;
   packet->PeekHeader(rlcHeader);
   SequenceNumber10 rlcSeq = rlcHeader.GetSequenceNumber();
+  RlcTag tag;
+  std::ostringstream delayString;
+  if(packet->FindFirstMatchingByteTag(tag)){
+    Time delay = Simulator::Now() - tag.GetSenderTimestamp();
+    delayString << delay.GetSeconds();
+  }
 
-  m_dlBufferFile << (Simulator::Now ()).GetSeconds () << " " << device << " " << cellId << " " << imsi << " " << rnti << " " << (uint32_t)lcid << " " << rlcSeq.GetValue() << " " << packet->GetSize() << " " << bufferSize << " " << vrR << " " << vrH << std::endl;
+  m_dlBufferFile << (Simulator::Now ()).GetSeconds () << "," << device << "," << cellId << "," << imsi << "," << rnti << "," << (uint32_t)lcid << "," << rlcSeq.GetValue() << "," << packet->GetSize() << "," << delayString.str() << "," << bufferPackets << "," << bufferSize << "," << vrR << "," << vrH << std::endl;
 }
          
 void
@@ -840,13 +871,13 @@ MmWaveBearerStatsCalculator::GetDlTxAmOutputFilename (void)
 void
 MmWaveBearerStatsCalculator::SetDlRetxOutputFilename (std::string outputFilename)
 {
-  m_ulRetxOutputFilename = outputFilename;
+  m_dlRetxOutputFilename = outputFilename;
 }
 
 std::string
 MmWaveBearerStatsCalculator::GetDlRetxOutputFilename (void)
 {
-  return m_ulRetxOutputFilename;
+  return m_dlRetxOutputFilename;
 }
 
 void

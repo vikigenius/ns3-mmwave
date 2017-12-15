@@ -236,14 +236,14 @@ MyApp::ScheduleTx (void)
 static void
 CwndChange (Ptr<OutputStreamWrapper> stream, uint32_t oldCwnd, uint32_t newCwnd)
 {
-	*stream->GetStream () << Simulator::Now ().GetSeconds () << "\t" << oldCwnd << "\t" << newCwnd << std::endl;
+	*stream->GetStream () << Simulator::Now ().GetSeconds () << "," << oldCwnd << "," << newCwnd << std::endl;
 }
 
 
 static void
 RttChange (Ptr<OutputStreamWrapper> stream, Time oldRtt, Time newRtt)
 {
-	*stream->GetStream () << Simulator::Now ().GetSeconds () << "\t" << oldRtt.GetSeconds () << "\t" << newRtt.GetSeconds () << std::endl;
+	*stream->GetStream () << Simulator::Now ().GetSeconds () << "," << oldRtt.GetSeconds () << "," << newRtt.GetSeconds () << std::endl;
 }
 
 static void Rx (Ptr<OutputStreamWrapper> stream, Ptr<const Packet> packet, const Address &from)
@@ -255,17 +255,18 @@ static void Rx (Ptr<OutputStreamWrapper> stream, Ptr<const Packet> packet, const
       Time curr(Simulator::Now());
       Time delay(curr - initial);
       //TODO: Add delay to stream output
-      *stream->GetStream () << curr.GetSeconds () << "," << delay.GetSeconds() << "," << packet->GetSize() << std::endl;      
+      *stream->GetStream () << curr.GetSeconds () << ","  << "," << delay.GetSeconds() << "," << packet->GetSize() << std::endl;      
     }
+  
 }
 
 static void OnTcpRTO (Ptr<OutputStreamWrapper> stream, Ptr<OutputStreamWrapper> stream2, Time oldval, Time newval)
 {
   if (newval >= 2*oldval)
     {
-      *stream->GetStream() << (Simulator::Now ()).GetSeconds () << " " << oldval.GetSeconds() << " " << newval.GetSeconds() << std::endl;      
+      *stream->GetStream() << (Simulator::Now ()).GetSeconds () << "," << oldval.GetSeconds() << "," << newval.GetSeconds() << std::endl;      
     }
-  *stream2->GetStream() << (Simulator::Now ()).GetSeconds () << " " << oldval.GetSeconds() << " " << newval.GetSeconds() << std::endl;      
+  *stream2->GetStream() << (Simulator::Now ()).GetSeconds () << "," << oldval.GetSeconds() << "," << newval.GetSeconds() << std::endl;
 }
 
 void
@@ -420,18 +421,22 @@ int main (int argc, char* argv[])
 
   remoteHostContainer.Get (0)->AddApplication (app);
   AsciiTraceHelper asciiTraceHelper;
-  Ptr<OutputStreamWrapper> stream1 = asciiTraceHelper.CreateFileStream ("mmWave-tcp-window-newreno-stats.txt");
+  Ptr<OutputStreamWrapper> stream1 = asciiTraceHelper.CreateFileStream ("mmWave-tcp-window-newreno-stats.csv");
   ns3TcpSocket->TraceConnectWithoutContext ("CongestionWindow", MakeBoundCallback (&CwndChange, stream1));
-
-  Ptr<OutputStreamWrapper> stream4 = asciiTraceHelper.CreateFileStream ("mmWave-tcp-rtt-newreno-stats.txt");
+  *stream1->GetStream() << "time,oldval,newval" << std::endl;
+  
+  Ptr<OutputStreamWrapper> stream4 = asciiTraceHelper.CreateFileStream ("mmWave-tcp-rtt-newreno-stats.csv");
   ns3TcpSocket->TraceConnectWithoutContext ("RTT", MakeBoundCallback (&RttChange, stream4));
-
-  Ptr<OutputStreamWrapper> stream2 = asciiTraceHelper.CreateFileStream ("mmWave-tcp-data-newreno-stats.txt");
+  *stream4->GetStream() << "time,oldval,newval" << std::endl;
+  
+  Ptr<OutputStreamWrapper> stream2 = asciiTraceHelper.CreateFileStream ("mmWave-tcp-data-newreno-stats.csv");
   sinkApps.Get(0)->TraceConnectWithoutContext("Rx",MakeBoundCallback (&Rx, stream2));
 
-  Ptr<OutputStreamWrapper> stream3 = asciiTraceHelper.CreateFileStream ("mmWave-tcp-rtoevents-stats.txt");
-  Ptr<OutputStreamWrapper> stream3b = asciiTraceHelper.CreateFileStream ("mmWave-tcp-rto-stats.txt");
+  Ptr<OutputStreamWrapper> stream3 = asciiTraceHelper.CreateFileStream ("mmWave-tcp-rtoevents-stats.csv");
+  Ptr<OutputStreamWrapper> stream3b = asciiTraceHelper.CreateFileStream ("mmWave-tcp-rto-stats.csv");
   ns3TcpSocket->TraceConnectWithoutContext ("RTO", MakeBoundCallback (&OnTcpRTO, stream3, stream3b));
+  *stream3->GetStream() << "time,oldval,newval" << std::endl;
+  *stream3b->GetStream() << "time,oldval,newval" << std::endl;
   
   app->SetStartTime (Seconds (0.1));
   app->SetStopTime (Seconds (stopTime));

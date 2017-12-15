@@ -313,7 +313,7 @@ public:
    * @param vrH
    */
   void
-  DlRlcBufferPdu (std::string device, uint16_t cellId, uint64_t imsi, uint16_t rnti, uint8_t lcid, Ptr<const Packet> packet, uint16_t bufferSize, SequenceNumber10 vrR, SequenceNumber10 vrH);
+  DlRlcBufferPdu (std::string device, uint16_t cellId, uint64_t imsi, uint16_t rnti, uint8_t lcid, Ptr<const Packet> packet, uint16_t bufferPackets, uint64_t bufferSize, SequenceNumber10 vrR, SequenceNumber10 vrH);
   
   /**
    * Gets the number of transmitted uplink packets.
@@ -567,7 +567,7 @@ private:
   /**
    * Name of the file where the uplink RLC Retx statistics will be saved
    */
-  std::string m_ulRetxOutputFilename;
+  std::string m_dlRetxOutputFilename;
 
   /**
    * Name of the file where the downlink RLC Rx statistics for AM will be saved
@@ -583,7 +583,7 @@ private:
   std::ofstream m_dlRxAmFile;
   std::ofstream m_ulOutFile;
   std::ofstream m_dlTxAmFile;
-  std::ofstream m_ulRetxFile;
+  std::ofstream m_dlRetxFile;
   std::ofstream m_dlBufferFile;
 };
 

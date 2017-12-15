@@ -143,6 +143,8 @@ private:
 
   void DoReportBufferStatus ();
 
+  uint64_t GetReceiveBufferSize();
+  
   std::string GetBufferSizeFilename();
   void SetBufferSizeFilename(std::string filename);
   void BufferSizeTrace();
@@ -193,7 +195,7 @@ private:
    * \param [in] vrH.
    */
   typedef void (* ReceiveBufferTracedCallback)
-  (uint16_t rnti, uint8_t lcid, Ptr<const Packet> packet, uint16_t bufferSize, SequenceNumber10 vrR, SequenceNumber10 vrH);  
+  (uint16_t rnti, uint8_t lcid, Ptr<const Packet> packet, uint16_t bufferPackets, uint64_t bufferSize, SequenceNumber10 vrR, SequenceNumber10 vrH);  
 
 private:
     std::vector < Ptr<Packet> > m_txonBuffer;       // Transmission buffer
@@ -225,32 +227,32 @@ private:
   uint32_t m_transmittingRlcSduBufferSize;
   std::map <uint32_t, Ptr <Packet> > m_transmittingRlcSduBuffer;
 
-    uint32_t m_txonBufferSize;
-    uint32_t m_retxBufferSize;
-    uint32_t m_txedBufferSize;
+  uint32_t m_txonBufferSize;
+  uint32_t m_retxBufferSize;
+  uint32_t m_txedBufferSize;
+  
+  bool     m_statusPduRequested;
+  uint32_t m_statusPduBufferSize;
 
-    bool     m_statusPduRequested;
-    uint32_t m_statusPduBufferSize;
+  struct PduBuffer
+  {
+    SequenceNumber10  m_seqNumber;
+    std::list < Ptr<Packet> >  m_byteSegments;
 
-    struct PduBuffer
-    {
-      SequenceNumber10  m_seqNumber;
-      std::list < Ptr<Packet> >  m_byteSegments;
+    bool      m_pduComplete;
+    uint16_t  m_totalSize;
+    uint16_t  m_currSize;
+  };
 
-      bool      m_pduComplete;
-      uint16_t  m_totalSize;
-      uint16_t  m_currSize;
-    };
+  std::map <uint16_t, PduBuffer > m_rxonBuffer; // Reception buffer
 
-    std::map <uint16_t, PduBuffer > m_rxonBuffer; // Reception buffer
+  Ptr<Packet> m_controlPduBuffer;               // Control PDU buffer (just one PDU)
 
-    Ptr<Packet> m_controlPduBuffer;               // Control PDU buffer (just one PDU)
-
-    // SDU reassembly
-//   std::vector < Ptr<Packet> > m_reasBuffer;     // Reassembling buffer
-// 
-    std::list < Ptr<Packet> > m_sdusBuffer;       // List of SDUs in a packet (PDU)
-    std::list < Ptr<Packet> > m_sdusAssembleBuffer;
+  // SDU reassembly
+  //   std::vector < Ptr<Packet> > m_reasBuffer;     // Reassembling buffer
+  // 
+  std::list < Ptr<Packet> > m_sdusBuffer;       // List of SDUs in a packet (PDU)
+  std::list < Ptr<Packet> > m_sdusAssembleBuffer;
 
   /**
    * State variables. See section 7.1 in TS 36.322
@@ -347,7 +349,7 @@ private:
   /**
    * Used to inform of a complete PDU being placed in the retransmission buffer
    */
-  TracedCallback<uint16_t, uint8_t, Ptr<const Packet>, uint16_t, SequenceNumber10, SequenceNumber10 > m_recvBuffer;
+  TracedCallback<uint16_t, uint8_t, Ptr<const Packet>, uint16_t, uint64_t, SequenceNumber10, SequenceNumber10 > m_recvBuffer;
 
 };
 

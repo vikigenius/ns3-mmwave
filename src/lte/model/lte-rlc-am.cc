@@ -120,6 +120,20 @@ LteRlcAm::BufferSizeTrace()
   m_traceBufferSizeEvent = Simulator::Schedule(MilliSeconds(10), &LteRlcAm::BufferSizeTrace, this);
 }
 
+uint64_t
+LteRlcAm::GetReceiveBufferSize()
+{
+  uint64_t bufferSize(0);
+  for(auto bufferiter : m_rxonBuffer)
+    {
+      for (auto pduiter : bufferiter.second.m_byteSegments)
+        {
+          bufferSize += pduiter->GetSize();
+        }
+    }
+  return bufferSize;
+}
+         
 std::string
 LteRlcAm::GetBufferSizeFilename()
 {
@@ -1940,6 +1954,7 @@ LteRlcAm::DoReceivePdu (Ptr<Packet> p)
                 {
                   // segment is next in sequence
                   it->second.m_byteSegments.push_back (p);
+                  it->second.m_currSize += p->GetSize();
                   if (rlcAmHeader.GetLastSegmentFlag () == LteRlcAmHeader::LAST_PDU_SEGMENT)
                   {
                     // got last segment, reassemble segments
@@ -1958,6 +1973,7 @@ LteRlcAm::DoReceivePdu (Ptr<Packet> p)
                     itSeg = it->second.m_byteSegments.begin ();
                     itSeg++;
                     it->second.m_byteSegments.erase (itSeg, it->second.m_byteSegments.end ());
+                    m_recvBuffer(m_rnti, m_lcid, p, m_rxonBuffer.size(), GetReceiveBufferSize(), m_vrR, m_vrH);
                   }
                 }
                 else
@@ -1987,6 +2003,7 @@ LteRlcAm::DoReceivePdu (Ptr<Packet> p)
                 }
                 else
                 {
+                  m_recvBuffer(m_rnti, m_lcid, p, m_rxonBuffer.size(), GetReceiveBufferSize(), m_vrR, m_vrH);
                   m_rxonBuffer[ seqNumber.GetValue () ].m_pduComplete = true;
                 }
               }
