@@ -45,7 +45,7 @@ using namespace ns3;
  * A script to simulate the DOWNLINK TCP data over mmWave links
  * with the mmWave devices and the LTE EPC.
  */
-NS_LOG_COMPONENT_DEFINE ("mmWaveL2BOproblem");
+NS_LOG_COMPONENT_DEFINE ("mmWaveL2BOsenderUE");
 
 class TimestampTag : public Tag {
 public:
@@ -304,6 +304,9 @@ int main (int argc, char* argv[])
   
   Config::SetDefault ("ns3::TcpL4Protocol::SocketType", TypeIdValue (TcpNewReno::GetTypeId ()));
 
+  // Enable Log Component
+  LogComponentEnable("TrafficControlLayer", LOG_LEVEL_DEBUG);
+  
   Ptr<MmWaveHelper> mmwaveHelper = CreateObject<MmWaveHelper> ();
 
   mmwaveHelper->SetAttribute ("PathlossModel", StringValue ("ns3::BuildingsObstaclePropagationLossModel"));
@@ -399,8 +402,7 @@ int main (int argc, char* argv[])
 
   mmwaveHelper->AttachToClosestEnb (ueDevs, enbDevs);
   mmwaveHelper->EnableTraces ();
-  mmwaveHelper->EnableTcpRtoAvoider();
-  
+
   // Set the default gateway for the UE
   Ptr<Node> ueNode = ueNodes.Get (0);
   Ptr<Ipv4StaticRouting> ueStaticRouting = ipv4RoutingHelper.GetStaticRouting (ueNode->GetObject<Ipv4> ());
@@ -409,18 +411,22 @@ int main (int argc, char* argv[])
   // Install and start applications on UEs and remote host
   uint16_t sinkPort = 20000;
 
-  Address sinkAddress (InetSocketAddress (ueIpIface.GetAddress (0), sinkPort));
+  Address sinkAddress (InetSocketAddress (remoteHostAddr, sinkPort));
   PacketSinkHelper packetSinkHelper ("ns3::TcpSocketFactory", InetSocketAddress (Ipv4Address::GetAny (), sinkPort));
-  ApplicationContainer sinkApps = packetSinkHelper.Install (ueNodes.Get (0));
+  ApplicationContainer sinkApps = packetSinkHelper.Install (remoteHostContainer.Get(0));
 
   sinkApps.Start (Seconds (0.));
   sinkApps.Stop (Seconds (simStopTime));
 
-  Ptr<Socket> ns3TcpSocket = Socket::CreateSocket (remoteHostContainer.Get (0), TcpSocketFactory::GetTypeId ());
+  Ptr<Socket> ns3TcpSocket = Socket::CreateSocket (ueNodes.Get(0) , TcpSocketFactory::GetTypeId ());
   Ptr<MyApp> app = CreateObject<MyApp> ();
   app->Setup (ns3TcpSocket, sinkAddress, 1400, 50000000, DataRate ("1000Mb/s"));
 
-  remoteHostContainer.Get (0)->AddApplication (app);
+  ueNodes.Get(0)->AddApplication(app);
+  
+
+  //Add Traces and Helpers
+
   AsciiTraceHelper asciiTraceHelper;
   Ptr<OutputStreamWrapper> stream1 = asciiTraceHelper.CreateFileStream ("mmWave-tcp-window-newreno-stats.csv");
   ns3TcpSocket->TraceConnectWithoutContext ("CongestionWindow", MakeBoundCallback (&CwndChange, stream1));

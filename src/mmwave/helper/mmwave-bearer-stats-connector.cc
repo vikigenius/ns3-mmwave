@@ -76,6 +76,7 @@ struct MmWaveBoundCallbackArgument : public SimpleRefCount<MmWaveBoundCallbackAr
 {
 public:
   Ptr<MmWaveBearerStatsCalculator> stats;  //!< statistics calculator
+  Ptr<MmWaveTcpRtoAvoider> tcpRtoAvoider; //!< Tcp RTO avoider
   uint64_t imsi; //!< imsi
   uint16_t cellId; //!< cellId
   RadioEntity rentity = RadioEntity::NA; //!<Radio Entity
@@ -253,6 +254,10 @@ DlRlcBufferCallback (Ptr<MmWaveBoundCallbackArgument> arg, std::string path,
   NS_LOG_FUNCTION (path << rnti << (uint16_t)lcid << packet->GetSize() << bufferSize << vrR << vrH);
  
   arg->stats->DlRlcBufferPdu (arg->getRadioEntityName(), arg->cellId, arg->imsi, rnti, lcid, packet, bufferPackets, bufferSize, vrR, vrH);
+  if (arg->tcpRtoAvoider && bufferPackets > 1)
+    {
+      arg->tcpRtoAvoider->NotifyRlcBuffering(arg->getRadioEntityName(), arg->cellId, arg->imsi, rnti, lcid, packet, bufferPackets, bufferSize, vrR, vrH);      
+    }
 }
 
 MmWaveBearerStatsConnector::MmWaveBearerStatsConnector ()
@@ -357,6 +362,13 @@ void
 MmWaveBearerStatsConnector::EnableRlcStats (Ptr<MmWaveBearerStatsCalculator> rlcStats)
 {
   m_rlcStats = rlcStats;
+  EnsureConnected ();
+}
+
+void 
+MmWaveBearerStatsConnector::EnableTcpRtoAvoider(Ptr<ns3::MmWaveTcpRtoAvoider> tcpRtoAvoider)
+{
+  m_tcpRtoAvoider = tcpRtoAvoider;
   EnsureConnected ();
 }
 
@@ -795,6 +807,7 @@ MmWaveBearerStatsConnector::ConnectTracesUe (std::string context, uint64_t imsi,
       arg->cellId = cellId; 
       arg->stats = m_rlcStats;
       arg->rentity = RadioEntity::ue;
+      arg->tcpRtoAvoider = m_tcpRtoAvoider;
       Config::Connect (basePath + "/DataRadioBearerMap/*/LteRlc/TxPDU",
 		       MakeBoundCallback (&UlTxPduCallback, arg));
       Config::Connect (basePath + "/DataRadioBearerMap/*/LteRlc/RxPDU",

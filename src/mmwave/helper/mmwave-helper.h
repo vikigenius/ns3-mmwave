@@ -82,6 +82,8 @@
 #include <ns3/buildings-obstacle-propagation-loss-model.h>
 #include <ns3/mmwave-3gpp-channel.h>
 
+#include <ns3/mmwave-tcp-rto-avoider.h>
+
 namespace ns3 {
 
 /* ... */
@@ -129,7 +131,7 @@ public:
 
 
 	void EnableTraces ();
-
+  void EnableTcpRtoAvoider (void);
 	void SetSchedulerType (std::string type);
 	std::string GetSchedulerType () const;
 
@@ -207,7 +209,8 @@ private:
 	void EnableUePacketCountTrace ();
 	void EnableTransportBlockTrace ();
 	void EnableRlcTraces (void);
-	Ptr<MmWaveBearerStatsCalculator> GetRlcStats (void);
+  
+        Ptr<MmWaveBearerStatsCalculator> GetRlcStats (void);
 	void EnablePdcpTraces (void);
 	Ptr<MmWaveBearerStatsCalculator> GetPdcpStats (void);
 	void EnableMcTraces (void);
@@ -285,7 +288,7 @@ private:
 	Ptr<McStatsCalculator> m_mcStats;
 	Ptr<MmWaveBearerStatsConnector> m_radioBearerStatsConnector;
   	Ptr<CoreNetworkStatsCalculator> m_cnStats;
-
+  Ptr<MmWaveTcpRtoAvoider> m_tcpRtoAvoider;    
 };
 
 }

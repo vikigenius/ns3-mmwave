@@ -27,3 +27,5 @@ def build(bld):
     obj.source = 'mc-twoenbs.cc' 
     obj = bld.create_ns3_program('mmwave-l2bo-problem', ['mmwave'])
     obj.source = 'mmwave-l2bo-problem.cc'
+    obj = bld.create_ns3_program('mmwave-l2bo-sender-ue', ['mmwave'])
+    obj.source = 'mmwave-l2bo-sender-ue.cc'

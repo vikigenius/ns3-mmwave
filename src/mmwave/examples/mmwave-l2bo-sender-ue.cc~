@@ -45,7 +45,7 @@ using namespace ns3;
  * A script to simulate the DOWNLINK TCP data over mmWave links
  * with the mmWave devices and the LTE EPC.
  */
-NS_LOG_COMPONENT_DEFINE ("mmWaveL2BOproblem");
+NS_LOG_COMPONENT_DEFINE ("mmWaveL2BOsenderUE");
 
 class TimestampTag : public Tag {
 public:
@@ -304,6 +304,9 @@ int main (int argc, char* argv[])
   
   Config::SetDefault ("ns3::TcpL4Protocol::SocketType", TypeIdValue (TcpNewReno::GetTypeId ()));
 
+  // Enable Log Component
+  LogComponentEnable("TrafficControlLayer", LOG_LEVEL_DEBUG);
+  
   Ptr<MmWaveHelper> mmwaveHelper = CreateObject<MmWaveHelper> ();
 
   mmwaveHelper->SetAttribute ("PathlossModel", StringValue ("ns3::BuildingsObstaclePropagationLossModel"));
@@ -399,8 +402,7 @@ int main (int argc, char* argv[])
 
   mmwaveHelper->AttachToClosestEnb (ueDevs, enbDevs);
   mmwaveHelper->EnableTraces ();
-  mmwaveHelper->EnableTcpRtoAvoider();
-  
+
   // Set the default gateway for the UE
   Ptr<Node> ueNode = ueNodes.Get (0);
   Ptr<Ipv4StaticRouting> ueStaticRouting = ipv4RoutingHelper.GetStaticRouting (ueNode->GetObject<Ipv4> ());

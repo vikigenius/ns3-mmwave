@@ -42,6 +42,7 @@
 #include <fstream>
 #include "ns3/object.h"
 #include <string>
+#include "ns3/mmwave-tcp-rto-avoider.h"
 
 #include <set>
 #include <map>
@@ -89,6 +90,11 @@ public:
    */
   void EnableRlcStats (Ptr<MmWaveBearerStatsCalculator> rlcStats);
 
+  /**
+   * Enable the TCP RTO avoider Module which performs dpi on packets
+   * and avoids TCP rto using buffering information from RLC
+   */
+  void EnableTcpRtoAvoider (Ptr<MmWaveTcpRtoAvoider> tcpRtoAvoider);
   /**
    * Enables trace sinks for PDCP layer. Usually, this function
    * is called by LteHelper::EnablePdcpTraces().
@@ -328,7 +334,8 @@ private:
   Ptr<MmWaveBearerStatsCalculator> m_rlcStats; //!< Calculator for RLC Statistics
   Ptr<MmWaveBearerStatsCalculator> m_pdcpStats; //!< Calculator for PDCP Statistics
   Ptr<McStatsCalculator> m_mcStats;
-
+  Ptr<MmWaveTcpRtoAvoider> m_tcpRtoAvoider; //!<Rto Avoider Module
+  
   bool m_connected; //!< true if traces are connected to sinks, initially set to false
   std::set<uint64_t> m_imsiSeenUe; //!< stores all UEs for which RLC and PDCP traces were connected
   std::set<uint64_t> m_imsiSeenEnb; //!< stores all eNBs for which RLC and PDCP traces were connected

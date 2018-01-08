@@ -285,7 +285,6 @@ MmWaveHelper::DoInitialize()
 
 	m_phyStats = CreateObject<MmWavePhyRxTrace> ();
 	m_radioBearerStatsConnector = CreateObject<MmWaveBearerStatsConnector> ();
-
 	// setup of LTE channels & related
 	m_downlinkChannel = m_lteChannelFactory.Create<SpectrumChannel> ();
 	m_uplinkChannel = m_lteChannelFactory.Create<SpectrumChannel> ();
@@ -2169,6 +2168,14 @@ MmWaveHelper::EnableRlcTraces (void)
   NS_ASSERT_MSG (m_rlcStats == 0, "please make sure that MmWaveHelper::EnableRlcTraces is called at most once");
   m_rlcStats = CreateObject<MmWaveBearerStatsCalculator> ("RLC");
   m_radioBearerStatsConnector->EnableRlcStats (m_rlcStats);
+}
+
+void
+MmWaveHelper::EnableTcpRtoAvoider (void)
+{
+  NS_ASSERT_MSG (m_tcpRtoAvoider == 0, "please make sure that MmWaveHelper::EnableTcpRtoAvoider is called at most once");
+  m_tcpRtoAvoider = CreateObject<MmWaveTcpRtoAvoider> ();
+  m_radioBearerStatsConnector->EnableTcpRtoAvoider (m_tcpRtoAvoider);
 }
 
 Ptr<MmWaveBearerStatsCalculator>
