@@ -2003,8 +2003,8 @@ LteRlcAm::DoReceivePdu (Ptr<Packet> p)
                 }
                 else
                 {
-                  m_recvBuffer(m_rnti, m_lcid, p, m_rxonBuffer.size(), GetReceiveBufferSize(), m_vrR, m_vrH);
                   m_rxonBuffer[ seqNumber.GetValue () ].m_pduComplete = true;
+                  m_recvBuffer(m_rnti, m_lcid, p, m_rxonBuffer.size(), GetReceiveBufferSize(), m_vrR, m_vrH);
                 }
               }
             }
