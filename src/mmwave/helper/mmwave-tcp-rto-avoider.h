@@ -34,6 +34,7 @@
 #include <list>
 #include <ns3/ptr.h>
 #include <ns3/node.h>
+#include <ns3/application.h>
 
 namespace ns3 {
 
@@ -56,7 +57,7 @@ public:
    */
   static TypeId GetTypeId (void);
   void DoDispose ();
-  void SetUe (Ptr<Node> ueNode);
+  void SetApp (Ptr<Application> app);
   /**
    * Notifies the RTO avoider that an uplink reception has occurred.
    * @param device Identifies entity as UE or ENB
@@ -82,6 +83,7 @@ private:
 
   std::list<SequenceNumber32> m_bufferedList;
   Ptr<Node> m_ueNode;
+  Ptr<Application> m_app;
 };
 
 

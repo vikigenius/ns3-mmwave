@@ -2171,11 +2171,11 @@ MmWaveHelper::EnableRlcTraces (void)
 }
 
 void
-MmWaveHelper::EnableTcpRtoAvoider (Ptr<Node> ueNode)
+MmWaveHelper::EnableTcpRtoAvoider (Ptr<Application> app)
 {
   NS_ASSERT_MSG (m_tcpRtoAvoider == 0, "please make sure that MmWaveHelper::EnableTcpRtoAvoider is called at most once");
   m_tcpRtoAvoider = CreateObject<MmWaveTcpRtoAvoider> ();
-  m_tcpRtoAvoider->SetUe (ueNode);
+  m_tcpRtoAvoider->SetApp (app);
   m_radioBearerStatsConnector->EnableTcpRtoAvoider (m_tcpRtoAvoider);
 }
 

@@ -400,7 +400,6 @@ int main (int argc, char* argv[])
 
   mmwaveHelper->AttachToClosestEnb (ueDevs, enbDevs);
   mmwaveHelper->EnableTraces ();
-  mmwaveHelper->EnableTcpRtoAvoider(ueNodes.Get(0));
   
   // Set the default gateway for the UE
   Ptr<Node> ueNode = ueNodes.Get (0);
@@ -413,6 +412,8 @@ int main (int argc, char* argv[])
   Address sinkAddress (InetSocketAddress (ueIpIface.GetAddress (0), sinkPort));
   PacketSinkHelper packetSinkHelper ("ns3::TcpSocketFactory", InetSocketAddress (Ipv4Address::GetAny (), sinkPort));
   ApplicationContainer sinkApps = packetSinkHelper.Install (ueNodes.Get (0));
+
+  mmwaveHelper->EnableTcpRtoAvoider(sinkApps.Get(0));
 
   sinkApps.Start (Seconds (0.));
   sinkApps.Stop (Seconds (simStopTime));

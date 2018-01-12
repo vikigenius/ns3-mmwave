@@ -31,6 +31,8 @@
 #include <ns3/tcp-header.h>
 #include <ns3/node.h>
 #include <ns3/ptr.h>
+#include <ns3/packet-sink.h>
+#include <ns3/application.h>
 
 namespace ns3 {
 
@@ -67,10 +69,10 @@ MmWaveTcpRtoAvoider::DoDispose()
 }
 
 void
-MmWaveTcpRtoAvoider::SetUe(Ptr<Node> ueNode)
+MmWaveTcpRtoAvoider::SetApp(Ptr<Application> app)
 {
   NS_LOG_FUNCTION(this);
-  m_ueNode = ueNode;    
+  m_app = app; 
 }
 
 void
@@ -107,9 +109,13 @@ MmWaveTcpRtoAvoider::DoDpi(Ptr<const Packet> packet)
     if (tcpHeader.GetDestinationPort())
       {
         m_bufferedList.push_back(tcpHeader.GetSequenceNumber());
-        //Inform TCP about the packet
-        Ptr<TcpSocketBase> ueSockPtr = m_ueNode->GetObject<TcpSocketBase>();
-        ueSockPtr->NotifyRlcBufferIndication (tcpHeader.GetSequenceNumber()); 
+        Ptr<PacketSink> app = m_app->GetObject<PacketSink>();
+        std::list<Ptr<Socket> > socketList = app->GetAcceptedSockets();
+        
+        for (auto socket : socketList) {
+          Ptr<TcpSocketBase> ueSockPtr = socket->GetObject<TcpSocketBase> ();
+          ueSockPtr->NotifyRlcBufferIndication (tcpHeader.GetSequenceNumber()); 
+        }
       }
 
     // Now put back the IP and PDCP headers
