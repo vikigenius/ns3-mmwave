@@ -30,7 +30,10 @@
 #include <ns3/sequence-number.h>
 #include <ns3/lte-rlc-sequence-number.h>
 #include <ns3/packet.h>
+#include <ns3/tcp-socket-base.h>
 #include <list>
+#include <ns3/ptr.h>
+#include <ns3/node.h>
 
 namespace ns3 {
 
@@ -53,7 +56,7 @@ public:
    */
   static TypeId GetTypeId (void);
   void DoDispose ();
-
+  void SetUe (Ptr<Node> ueNode);
   /**
    * Notifies the RTO avoider that an uplink reception has occurred.
    * @param device Identifies entity as UE or ENB
@@ -78,6 +81,7 @@ private:
   DoDpi (Ptr<const Packet> packet);
 
   std::list<SequenceNumber32> m_bufferedList;
+  Ptr<Node> m_ueNode;
 };
 
 

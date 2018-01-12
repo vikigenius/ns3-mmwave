@@ -3930,6 +3930,12 @@ TcpSocketBase::SafeSubtraction (uint32_t a, uint32_t b)
   return 0;
 }
 
+void
+TcpSocketBase::NotifyRlcBufferIndication (SequenceNumber32 indSeq)
+{
+
+}
+
 //RttHistory methods
 RttHistory::RttHistory (SequenceNumber32 s, uint32_t c, Time t)
   : seq (s),

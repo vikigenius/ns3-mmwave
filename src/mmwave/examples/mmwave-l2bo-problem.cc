@@ -121,6 +121,7 @@ TimestampTag::GetTimestamp (void) const
   return m_timestamp;
 }
 
+
 void 
 TimestampTag::Print (std::ostream &os) const
 {
@@ -399,7 +400,7 @@ int main (int argc, char* argv[])
 
   mmwaveHelper->AttachToClosestEnb (ueDevs, enbDevs);
   mmwaveHelper->EnableTraces ();
-  mmwaveHelper->EnableTcpRtoAvoider();
+  mmwaveHelper->EnableTcpRtoAvoider(ueNodes.Get(0));
   
   // Set the default gateway for the UE
   Ptr<Node> ueNode = ueNodes.Get (0);
@@ -453,6 +454,6 @@ int main (int argc, char* argv[])
   Simulator::Stop (Seconds (simStopTime));
   Simulator::Run ();
   Simulator::Destroy ();
-  
+
   return 0;
 }

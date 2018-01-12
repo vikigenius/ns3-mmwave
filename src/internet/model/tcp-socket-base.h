@@ -1071,6 +1071,16 @@ protected:
    */
   static uint32_t SafeSubtraction (uint32_t a, uint32_t b);
 
+  /**
+   * \brief Indication from RLC that it has entered recovery mode 
+   *
+   * The TcpRtoAvoider module calls this function to notify that
+   * a TCP packet might be missing
+   * 
+   * \param indSeq the Seq Number of the out of sequence packet
+   */ 
+  void NotifyRlcBufferIndication (SequenceNumber32 indSeq);
+
 protected:
   // Counters and events
   EventId           m_retxEvent;       //!< Retransmission event
@@ -1094,6 +1104,7 @@ protected:
   Time              m_persistTimeout;  //!< Time between sending 1-byte probes
   Time              m_cnTimeout;       //!< Timeout for connection retry
   RttHistory_t      m_history;         //!< List of sent packet
+  Time              m_thresholdTimer;  //!< The threshold timer indication for RLC Buffer indication
 
   // Connections to other layers of TCP/IP
   Ipv4EndPoint*       m_endPoint;   //!< the IPv4 endpoint

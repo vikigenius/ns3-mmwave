@@ -29,6 +29,8 @@
 #include <ns3/lte-pdcp-header.h>
 #include <ns3/ipv4-header.h>
 #include <ns3/tcp-header.h>
+#include <ns3/node.h>
+#include <ns3/ptr.h>
 
 namespace ns3 {
 
@@ -53,7 +55,8 @@ MmWaveTcpRtoAvoider::GetTypeId ()
     TypeId ("ns3::MmWaveTcpRtoAvoider")
     .SetParent<Object> ()
     .AddConstructor<MmWaveTcpRtoAvoider> ()
-    .SetGroupName("Lte");
+    .SetGroupName("Lte")
+    ;
   return tid;
 }
 
@@ -64,9 +67,21 @@ MmWaveTcpRtoAvoider::DoDispose()
 }
 
 void
+MmWaveTcpRtoAvoider::SetUe(Ptr<Node> ueNode)
+{
+  NS_LOG_FUNCTION(this);
+  m_ueNode = ueNode;    
+}
+
+void
 MmWaveTcpRtoAvoider::NotifyRlcBuffering(std::string device, uint16_t cellId, uint64_t imsi, uint16_t rnti, uint8_t lcid, Ptr<const Packet> packet, uint16_t bufferPackets, uint64_t bufferSize, SequenceNumber10 vrR, SequenceNumber10 vrH)
 {
-  DoDpi(packet);
+  LteRlcAmHeader rlcHeader;
+  packet->PeekHeader(rlcHeader);
+  if(rlcHeader.GetSequenceNumber() > vrR)
+    {
+      DoDpi(packet);      
+    }
 }
 
 void
@@ -100,6 +115,9 @@ MmWaveTcpRtoAvoider::DoDpi(Ptr<const Packet> packet)
   }
   // Put back the RLC Header
   copiedPacket->AddHeader(rlcHeader);
+
+  //Inform TCP about the packet
+  Ptr<TcpSocketBase> ueSockPtr = m_ueNode->GetObject<TcpSocketBase>();
 }
 
 }//namespace ns3

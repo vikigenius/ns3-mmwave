@@ -254,7 +254,7 @@ DlRlcBufferCallback (Ptr<MmWaveBoundCallbackArgument> arg, std::string path,
   NS_LOG_FUNCTION (path << rnti << (uint16_t)lcid << packet->GetSize() << bufferSize << vrR << vrH);
  
   arg->stats->DlRlcBufferPdu (arg->getRadioEntityName(), arg->cellId, arg->imsi, rnti, lcid, packet, bufferPackets, bufferSize, vrR, vrH);
-  if (arg->tcpRtoAvoider && bufferPackets > 1)
+  if (arg->tcpRtoAvoider)
     {
       arg->tcpRtoAvoider->NotifyRlcBuffering(arg->getRadioEntityName(), arg->cellId, arg->imsi, rnti, lcid, packet, bufferPackets, bufferSize, vrR, vrH);      
     }
