@@ -78,7 +78,7 @@ MmWaveTcpRtoAvoider::NotifyRlcBuffering(std::string device, uint16_t cellId, uin
 {
   LteRlcAmHeader rlcHeader;
   packet->PeekHeader(rlcHeader);
-  if(rlcHeader.GetSequenceNumber() > vrR)
+  if(rlcHeader.GetSequenceNumber().GetValue() > vrR.GetValue())
     {
       DoDpi(packet);      
     }
