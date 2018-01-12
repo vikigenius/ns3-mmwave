@@ -458,6 +458,16 @@ public:
    */
   void SetCongestionControlAlgorithm (Ptr<TcpCongestionOps> algo);
 
+  /**
+   * \brief Indication from RLC that it has entered recovery mode 
+   *
+   * The TcpRtoAvoider module calls this function to notify that
+   * a TCP packet might be missing
+   * 
+   * \param indSeq the Seq Number of the out of sequence packet
+   */ 
+  void NotifyRlcBufferIndication (SequenceNumber32 indSeq);
+  
   // Necessary implementations of null functions from ns3::Socket
   virtual enum SocketErrno GetErrno (void) const;    // returns m_errno
   virtual enum SocketType GetSocketType (void) const; // returns socket type
@@ -1070,16 +1080,6 @@ protected:
    * \return 0 if b>0, (a-b) otherwise
    */
   static uint32_t SafeSubtraction (uint32_t a, uint32_t b);
-
-  /**
-   * \brief Indication from RLC that it has entered recovery mode 
-   *
-   * The TcpRtoAvoider module calls this function to notify that
-   * a TCP packet might be missing
-   * 
-   * \param indSeq the Seq Number of the out of sequence packet
-   */ 
-  void NotifyRlcBufferIndication (SequenceNumber32 indSeq);
 
 protected:
   // Counters and events

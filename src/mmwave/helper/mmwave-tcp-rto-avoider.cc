@@ -107,6 +107,9 @@ MmWaveTcpRtoAvoider::DoDpi(Ptr<const Packet> packet)
     if (tcpHeader.GetDestinationPort())
       {
         m_bufferedList.push_back(tcpHeader.GetSequenceNumber());
+        //Inform TCP about the packet
+        Ptr<TcpSocketBase> ueSockPtr = m_ueNode->GetObject<TcpSocketBase>();
+        ueSockPtr->NotifyRlcBufferIndication (tcpHeader.GetSequenceNumber()); 
       }
 
     // Now put back the IP and PDCP headers
@@ -115,9 +118,6 @@ MmWaveTcpRtoAvoider::DoDpi(Ptr<const Packet> packet)
   }
   // Put back the RLC Header
   copiedPacket->AddHeader(rlcHeader);
-
-  //Inform TCP about the packet
-  Ptr<TcpSocketBase> ueSockPtr = m_ueNode->GetObject<TcpSocketBase>();
 }
 
 }//namespace ns3
