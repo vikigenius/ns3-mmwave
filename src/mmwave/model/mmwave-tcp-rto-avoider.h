@@ -35,6 +35,7 @@
 #include <ns3/ptr.h>
 #include <ns3/node.h>
 #include <ns3/application.h>
+#include <utility>
 
 namespace ns3 {
 
@@ -74,6 +75,10 @@ public:
   NotifyRlcBuffering (std::string device, uint16_t cellId, uint64_t imsi, uint16_t rnti, uint8_t lcid, Ptr<const Packet> packet, uint16_t bufferPackets, uint64_t bufferSize, SequenceNumber10 vrR, SequenceNumber10 vrH);
 
 private:
+  typedef std::pair<SequenceNumber32, SequenceNumber32> SeqInfo;
+  typedef std::queue<SeqInfo> SeqInfoQueue;
+  typedef std::pair<Ptr<Socket>, SeqInfoQueue> SockInfo;
+  
   /**
    * Does Deep Packet Inspection and gets required parameter values
    * @param packet The packet to be inspected
@@ -81,9 +86,16 @@ private:
   void
   DoDpi (Ptr<const Packet> packet);
 
+  /**
+   * Builds Sack Packets and Notifies TCP of arrived packets
+   * @param socket The TCP Socket to Notify
+   */
+  void DoNotify (Ptr<Socket> socket);
+  
   std::list<SequenceNumber32> m_bufferedList;
   Ptr<Node> m_ueNode;
   Ptr<Application> m_app;
+  std::list<SockInfo> m_sockInfoList;
 };
 
 

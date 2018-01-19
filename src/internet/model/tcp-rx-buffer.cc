@@ -349,7 +349,7 @@ TcpRxBuffer::ClearSackList (const SequenceNumber32 &seq)
           it = m_sackList.erase (it);
         }
       else
-	{
+        {
           it++;
         }
     }

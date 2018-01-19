@@ -220,6 +220,8 @@ private:
   uint32_t m_maxBuffer;                      //!< Upper bound of the number of data bytes in buffer (RCV.WND)
   uint32_t m_availBytes;                     //!< Number of bytes available to read, i.e. contiguous block at head
   std::map<SequenceNumber32, Ptr<Packet> > m_data; //!< Corresponding data (may be null)
+
+  friend class MmWaveTcpRtoAvoider;
 };
 
 } //namepsace ns3

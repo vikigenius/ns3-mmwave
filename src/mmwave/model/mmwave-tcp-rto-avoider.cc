@@ -113,8 +113,8 @@ MmWaveTcpRtoAvoider::DoDpi(Ptr<const Packet> packet)
         std::list<Ptr<Socket> > socketList = app->GetAcceptedSockets();
         
         for (auto socket : socketList) {
-          Ptr<TcpSocketBase> ueSockPtr = socket->GetObject<TcpSocketBase> ();
-          ueSockPtr->NotifyRlcBufferIndication (tcpHeader.GetSequenceNumber()); 
+          
+          DoNotify (socket);
         }
       }
 
@@ -126,4 +126,16 @@ MmWaveTcpRtoAvoider::DoDpi(Ptr<const Packet> packet)
   copiedPacket->AddHeader(rlcHeader);
 }
 
+void
+MmWaveTcpRtoAvoider::DoNotify (Ptr<Socket> socket)
+{
+  Ptr<TcpSocketBase> ueSockPtr = socket->GetObject<TcpSocketBase> ();
+  Ptr<TcpRxBuffer> rxBuffer = ueSockPtr->GetRxBuffer();
+  SequenceNumber32 nextSeq = rxBuffer->NextRxSequence();
+  SequenceNumber32 curSeq = m_bufferedList.back();
+  if (curSeq > nextSeq) {
+    SequenceNumber32 headSeq = curSeq;
+  }
+}
+  
 }//namespace ns3
