@@ -40,7 +40,8 @@ NS_LOG_COMPONENT_DEFINE ("MmWaveTcpRtoAvoider");
 
 NS_OBJECT_ENSURE_REGISTERED (MmWaveTcpRtoAvoider);
 
-MmWaveTcpRtoAvoider::MmWaveTcpRtoAvoider ()
+MmWaveTcpRtoAvoider::MmWaveTcpRtoAvoider (Ptr<Node> ueNode)
+  :m_ueNode(ueNode)
 {
   NS_LOG_FUNCTION(this);
 }
@@ -56,7 +57,6 @@ MmWaveTcpRtoAvoider::GetTypeId ()
   static TypeId tid =
     TypeId ("ns3::MmWaveTcpRtoAvoider")
     .SetParent<Object> ()
-    .AddConstructor<MmWaveTcpRtoAvoider> ()
     .SetGroupName("Lte")
     ;
   return tid;
@@ -69,21 +69,16 @@ MmWaveTcpRtoAvoider::DoDispose()
 }
 
 void
-MmWaveTcpRtoAvoider::SetApp(Ptr<Application> app)
-{
-  NS_LOG_FUNCTION(this);
-  m_app = app; 
-}
-
-void
-MmWaveTcpRtoAvoider::NotifyRlcBuffering(std::string device, uint16_t cellId, uint64_t imsi, uint16_t rnti, uint8_t lcid, Ptr<const Packet> packet, uint16_t bufferPackets, uint64_t bufferSize, SequenceNumber10 vrR, SequenceNumber10 vrH)
+MmWaveTcpRtoAvoider::HandleRlcBuffering(std::string device, uint16_t cellId, uint64_t imsi, uint16_t rnti, uint8_t lcid, Ptr<const Packet> packet, uint16_t bufferPackets, uint64_t bufferSize, SequenceNumber10 vrR, SequenceNumber10 vrH)
 {
   LteRlcAmHeader rlcHeader;
   packet->PeekHeader(rlcHeader);
-  if(rlcHeader.GetSequenceNumber().GetValue() > vrR.GetValue())
+  if(rlcHeader.GetSequenceNumber().GetValue() <= vrR.GetValue())
     {
-      DoDpi(packet);      
+      return; //In Sequence or Recovery: Nothing to see here
     }
+  
+  DoDpi(packet);      
 }
 
 void
@@ -112,10 +107,10 @@ MmWaveTcpRtoAvoider::DoDpi(Ptr<const Packet> packet)
         Ptr<PacketSink> app = m_app->GetObject<PacketSink>();
         std::list<Ptr<Socket> > socketList = app->GetAcceptedSockets();
         
-        for (auto socket : socketList) {
-          
-          DoNotify (socket);
-        }
+        for (auto socket : socketList)
+          {
+            ;
+          }
       }
 
     // Now put back the IP and PDCP headers
@@ -124,18 +119,5 @@ MmWaveTcpRtoAvoider::DoDpi(Ptr<const Packet> packet)
   }
   // Put back the RLC Header
   copiedPacket->AddHeader(rlcHeader);
-}
-
-void
-MmWaveTcpRtoAvoider::DoNotify (Ptr<Socket> socket)
-{
-  Ptr<TcpSocketBase> ueSockPtr = socket->GetObject<TcpSocketBase> ();
-  Ptr<TcpRxBuffer> rxBuffer = ueSockPtr->GetRxBuffer();
-  SequenceNumber32 nextSeq = rxBuffer->NextRxSequence();
-  SequenceNumber32 curSeq = m_bufferedList.back();
-  if (curSeq > nextSeq) {
-    SequenceNumber32 headSeq = curSeq;
-  }
-}
-  
+} 
 }//namespace ns3

@@ -43,7 +43,7 @@ class MmWaveTcpRtoAvoider : public Object
 {
 public:
   /// Constructor
-  MmWaveTcpRtoAvoider ();
+  MmWaveTcpRtoAvoider (Ptr<Node> ueNode);
 
   /**
    * Class destructor
@@ -58,7 +58,7 @@ public:
    */
   static TypeId GetTypeId (void);
   void DoDispose ();
-  void SetApp (Ptr<Application> app);
+
   /**
    * Notifies the RTO avoider that an uplink reception has occurred.
    * @param device Identifies entity as UE or ENB
@@ -72,30 +72,25 @@ public:
    * @param vrH
    */  
   void
-  NotifyRlcBuffering (std::string device, uint16_t cellId, uint64_t imsi, uint16_t rnti, uint8_t lcid, Ptr<const Packet> packet, uint16_t bufferPackets, uint64_t bufferSize, SequenceNumber10 vrR, SequenceNumber10 vrH);
-
+  HandleRlcBuffering (std::string device, uint16_t cellId, uint64_t imsi, uint16_t rnti, uint8_t lcid, Ptr<const Packet> packet, uint16_t bufferPackets, uint64_t bufferSize, SequenceNumber10 vrR, SequenceNumber10 vrH);
+ 
 private:
   typedef std::pair<SequenceNumber32, SequenceNumber32> SeqInfo;
   typedef std::queue<SeqInfo> SeqInfoQueue;
   typedef std::pair<Ptr<Socket>, SeqInfoQueue> SockInfo;
-  
+
   /**
    * Does Deep Packet Inspection and gets required parameter values
    * @param packet The packet to be inspected
    */
   void
   DoDpi (Ptr<const Packet> packet);
-
-  /**
-   * Builds Sack Packets and Notifies TCP of arrived packets
-   * @param socket The TCP Socket to Notify
-   */
-  void DoNotify (Ptr<Socket> socket);
-  
+ 
   std::list<SequenceNumber32> m_bufferedList;
   Ptr<Node> m_ueNode;
   Ptr<Application> m_app;
   std::list<SockInfo> m_sockInfoList;
+  SequenceNumber32 m_nextRxSequence;
 };
 
 

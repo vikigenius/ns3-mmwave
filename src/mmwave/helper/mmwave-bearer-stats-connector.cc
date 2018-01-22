@@ -256,7 +256,7 @@ DlRlcBufferCallback (Ptr<MmWaveBoundCallbackArgument> arg, std::string path,
   arg->stats->DlRlcBufferPdu (arg->getRadioEntityName(), arg->cellId, arg->imsi, rnti, lcid, packet, bufferPackets, bufferSize, vrR, vrH);
   if (arg->tcpRtoAvoider)
     {
-      arg->tcpRtoAvoider->NotifyRlcBuffering(arg->getRadioEntityName(), arg->cellId, arg->imsi, rnti, lcid, packet, bufferPackets, bufferSize, vrR, vrH);      
+      arg->tcpRtoAvoider->HandleRlcBuffering(arg->getRadioEntityName(), arg->cellId, arg->imsi, rnti, lcid, packet, bufferPackets, bufferSize, vrR, vrH);      
     }
 }
 

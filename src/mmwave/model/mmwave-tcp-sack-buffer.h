@@ -42,35 +42,13 @@ public:
    * \brief Constructor
    * \param n the initial size of buffer
    */
-  MmWaveTcpSackBuffer (uint32_t n = 0);
+  MmWaveTcpSackBuffer (void);
 
   /**
    * \brief Virtual Destructor
    */
   virtual ~MmWaveTcpSackBuffer ();
-
-  // Accessors
-  /**
-   * \brief Get Next Rx Sequence number
-   * \returns Next Rx Sequence number
-   */
-  SequenceNumber32 NextRxSequence (void) const;
-
-  // Tracker
-  /**
-   * \brief Trace the Tcp Next Seq Number
-   * \param oldval the old value
-   * \param newval The New value
-   */
-  void TraceNextRxSequence (SequenceNumber32 oldval, SequenceNumber32 newval);
-
-  // Setters
-  /**
-   * \brief Set the value of Tcp next Rx Sequence
-   * \param nextRxSequence the value of nextRxSequence to set
-   */
-  void SetNextRxSequence (SequenceNumber32 nextRxSequence);
-  
+ 
 private:
   /**
    * \brief Update the sack list, with the block seq starting at the beginning
@@ -109,7 +87,6 @@ private:
 
   /// container for data stored in the buffer
   typedef std::map<SequenceNumber32, Ptr<Packet> >::iterator BufIterator;
-  SequenceNumber32 m_nextRxSeq; //!< Seqnum of the first missing byte in data (RCV.NXT)
 };
 }
 

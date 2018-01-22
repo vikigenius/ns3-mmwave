@@ -22,6 +22,7 @@
 #include "ns3/packet.h"
 #include "ns3/fatal-error.h"
 #include "ns3/log.h"
+#include "ns3/tcp-header.h"
 
 namespace ns3 {
 
@@ -40,8 +41,7 @@ MmWaveTcpSackBuffer::GetTypeId (void)
   return tid;
 }
 
-MmWaveTcpSackBuffer::MmWaveTcpSackBuffer (uint32_t n)
-  :m_nextRxSeq(n)
+MmWaveTcpSackBuffer::MmWaveTcpSackBuffer ()
 {
   NS_LOG_FUNCTION (this);
 }
@@ -51,15 +51,16 @@ MmWaveTcpSackBuffer::~MmWaveTcpSackBuffer ()
   NS_LOG_FUNCTION (this);
 }
 
-void MmWaveTcpSackBuffer::TraceNextRxSequence(ns3::SequenceNumber32 oldval, ns3::SequenceNumber32 newval)
+void
+MmWaveTcpSackBuffer::UpdateSackList (const SequenceNumber32 &head, const SequenceNumber32 &tail)
 {
-  //Set the nextRxSequence as new value
-  SetNextRxSequence(newval);
+
 }
 
-void MmWaveTcpSackBuffer::SetNextRxSequence(ns3::SequenceNumber32 nextRxSequence)
+void
+MmWaveTcpSackBuffer::ClearSackList (const SequenceNumber32 &seq)
 {
-  m_nextRxSeq = nextRxSequence;
+
 }
 } //namespace ns3
 

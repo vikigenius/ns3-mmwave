@@ -131,7 +131,7 @@ public:
 
 
 	void EnableTraces ();
-  void EnableTcpRtoAvoider (Ptr<Application> app);
+  void EnableTcpRtoAvoider (Ptr<Node> app);
 	void SetSchedulerType (std::string type);
 	std::string GetSchedulerType () const;
 

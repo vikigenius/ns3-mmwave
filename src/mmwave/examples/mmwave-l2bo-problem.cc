@@ -413,7 +413,7 @@ int main (int argc, char* argv[])
   PacketSinkHelper packetSinkHelper ("ns3::TcpSocketFactory", InetSocketAddress (Ipv4Address::GetAny (), sinkPort));
   ApplicationContainer sinkApps = packetSinkHelper.Install (ueNodes.Get (0));
 
-  mmwaveHelper->EnableTcpRtoAvoider(sinkApps.Get(0));
+  mmwaveHelper->EnableTcpRtoAvoider(ueNode);
 
   sinkApps.Start (Seconds (0.));
   sinkApps.Stop (Seconds (simStopTime));
