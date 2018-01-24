@@ -126,7 +126,9 @@ MmWaveTcpRtoAvoider::DoDpi(Ptr<const Packet> packet)
     if (tcpHeader.GetDestinationPort())
       {
         m_bufferedList.push_back(tcpHeader.GetSequenceNumber());
-        auto sockAdd = GetSockAddress(ipv4Header.GetSource() , tcpHeader.GetSourcePort());
+        //auto sockAdd = GetSockAddress(ipv4Header.GetSource() , tcpHeader.GetSourcePort());
+        // Use Destination address because UE Rlc is the receiver
+        auto sockAdd = GetSockAddress(ipv4Header.GetDestination() , tcpHeader.GetDestinationPort());
         auto sockIter = m_sockInfoMap.find(sockAdd);
         if (sockIter != m_sockInfoMap.end())
           {
