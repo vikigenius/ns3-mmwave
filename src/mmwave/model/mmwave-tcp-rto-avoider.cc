@@ -172,6 +172,7 @@ MmWaveTcpRtoAvoider::GetSocketInfo (Address sockAddr)
         if (sockAddr == realSockAddr) {
           sockInfo.sockPtr = socket->GetObject<TcpSocketBase>();
           sockInfo.nextRxSequence = sockInfo.sockPtr->GetRxBuffer()->NextRxSequence();
+          sockInfo.sackBuffer = CreateObject<MmWaveTcpSackBuffer>();
           sockInfo.sackBuffer->MirrorSackList (sockInfo.sockPtr->GetRxBuffer()->GetSackList());
         }
       }
