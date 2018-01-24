@@ -301,6 +301,7 @@ public:
  */
 class TcpSocketBase : public TcpSocket
 {
+  friend class MmWaveTcpRtoAvoider;
 public:
   /**
    * Get the type ID.

@@ -31,11 +31,11 @@
 #include <ns3/lte-rlc-sequence-number.h>
 #include <ns3/packet.h>
 #include <ns3/tcp-socket-base.h>
-#include <list>
+#include <map>
+#include <memory>
 #include <ns3/ptr.h>
 #include <ns3/node.h>
 #include <ns3/application.h>
-#include <utility>
 
 namespace ns3 {
 
@@ -75,22 +75,37 @@ public:
   HandleRlcBuffering (std::string device, uint16_t cellId, uint64_t imsi, uint16_t rnti, uint8_t lcid, Ptr<const Packet> packet, uint16_t bufferPackets, uint64_t bufferSize, SequenceNumber10 vrR, SequenceNumber10 vrH);
  
 private:
-  typedef std::pair<SequenceNumber32, SequenceNumber32> SeqInfo;
-  typedef std::queue<SeqInfo> SeqInfoQueue;
-  typedef std::pair<Ptr<Socket>, SeqInfoQueue> SockInfo;
-
+  struct SockInfo;
+  typedef std::map <Address, std::shared_ptr<SockInfo>> SocketMap; 
+  
   /**
    * Does Deep Packet Inspection and gets required parameter values
    * @param packet The packet to be inspected
    */
-  void
-  DoDpi (Ptr<const Packet> packet);
- 
+  void DoDpi (Ptr<const Packet> packet);
+
+  /*
+   * \brief Gets the Information about the socket from Address
+   * Fills the Socket Information
+   * \param sockAddress the address of the socket to extract info from
+   * \return the socket information
+   */
+  SockInfo GetSocketInfo (Address sockAddres);
+
+  /*
+   * \brief Updates the Information about the socket from Address
+   * Fills the Socket Information
+   * \param sockAddress the address of the socket to extract info from
+   * \return the socket information
+   */
+  SockInfo UpdateSockInfo (SockInfo sockInfo);
+  
+  void SendSackInd ();
+
   std::list<SequenceNumber32> m_bufferedList;
   Ptr<Node> m_ueNode;
-  Ptr<Application> m_app;
-  std::list<SockInfo> m_sockInfoList;
-  SequenceNumber32 m_nextRxSequence;
+  SocketMap m_sockInfoMap;
+  std::shared_ptr<SockInfo> m_curSockInfo;
 };
 
 

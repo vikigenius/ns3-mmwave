@@ -23,6 +23,7 @@
 #include "ns3/fatal-error.h"
 #include "ns3/log.h"
 #include "ns3/tcp-header.h"
+#include "ns3/tcp-option-sack.h"
 
 namespace ns3 {
 
@@ -49,6 +50,12 @@ MmWaveTcpSackBuffer::MmWaveTcpSackBuffer ()
 MmWaveTcpSackBuffer::~MmWaveTcpSackBuffer ()
 {
   NS_LOG_FUNCTION (this);
+}
+
+void
+MmWaveTcpSackBuffer::MirrorSackList(TcpOptionSack::SackList sackList)
+{
+  m_sackList = sackList;
 }
 
 void

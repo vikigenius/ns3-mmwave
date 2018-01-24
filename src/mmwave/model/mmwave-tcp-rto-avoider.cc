@@ -21,6 +21,7 @@
  */
 
 #include "mmwave-tcp-rto-avoider.h"
+#include "mmwave-tcp-sack-buffer.h"
 #include <ns3/log.h>
 #include <ns3/packet.h>
 #include <ns3/sequence-number.h>
@@ -33,12 +34,29 @@
 #include <ns3/ptr.h>
 #include <ns3/packet-sink.h>
 #include <ns3/application.h>
+#include <ns3/address.h>
+#include <ns3/inet-socket-address.h>
 
 namespace ns3 {
 
 NS_LOG_COMPONENT_DEFINE ("MmWaveTcpRtoAvoider");
 
 NS_OBJECT_ENSURE_REGISTERED (MmWaveTcpRtoAvoider);
+
+static Address
+GetSockAddress (Ipv4Address srcAddr, uint16_t srcPort)
+{
+  auto inetaddr = InetSocketAddress(srcAddr, srcPort);
+  return Address (inetaddr);
+}
+
+struct
+MmWaveTcpRtoAvoider::SockInfo
+{
+  Ptr<TcpSocketBase> sockPtr;
+  SequenceNumber32 nextRxSequence;
+  Ptr<MmWaveTcpSackBuffer> sackBuffer;
+};
 
 MmWaveTcpRtoAvoider::MmWaveTcpRtoAvoider (Ptr<Node> ueNode)
   :m_ueNode(ueNode)
@@ -78,7 +96,11 @@ MmWaveTcpRtoAvoider::HandleRlcBuffering(std::string device, uint16_t cellId, uin
       return; //In Sequence or Recovery: Nothing to see here
     }
   
-  DoDpi(packet);      
+  DoDpi(packet);
+  if (m_curSockInfo)
+    {
+      SendSackInd();
+    }
 }
 
 void
@@ -104,13 +126,25 @@ MmWaveTcpRtoAvoider::DoDpi(Ptr<const Packet> packet)
     if (tcpHeader.GetDestinationPort())
       {
         m_bufferedList.push_back(tcpHeader.GetSequenceNumber());
-        Ptr<PacketSink> app = m_app->GetObject<PacketSink>();
-        std::list<Ptr<Socket> > socketList = app->GetAcceptedSockets();
-        
-        for (auto socket : socketList)
+        auto sockAdd = GetSockAddress(ipv4Header.GetSource() , tcpHeader.GetSourcePort());
+        auto sockIter = m_sockInfoMap.find(sockAdd);
+        if (sockIter != m_sockInfoMap.end())
           {
-            ;
+            auto curSockPtr = sockIter->second->sockPtr;
+            auto rxBuffer = curSockPtr->GetRxBuffer ();
+            sockIter->second->nextRxSequence = rxBuffer->NextRxSequence();
+            sockIter->second->sackBuffer->MirrorSackList(rxBuffer->GetSackList());
+            m_curSockInfo = sockIter->second;
           }
+        else
+          {
+            m_curSockInfo = std::make_shared<SockInfo>(GetSocketInfo(sockAdd));
+            m_sockInfoMap[sockAdd] = m_curSockInfo;
+          }
+      }
+    else
+      {
+        m_curSockInfo.reset();
       }
 
     // Now put back the IP and PDCP headers
@@ -119,5 +153,33 @@ MmWaveTcpRtoAvoider::DoDpi(Ptr<const Packet> packet)
   }
   // Put back the RLC Header
   copiedPacket->AddHeader(rlcHeader);
-} 
+}
+
+MmWaveTcpRtoAvoider::SockInfo
+MmWaveTcpRtoAvoider::GetSocketInfo (Address sockAddr)
+{
+  SockInfo sockInfo;
+  uint32_t numApps = m_ueNode->GetNApplications();
+  for (uint32_t appid = 0; appid < numApps; appid++) {
+    Ptr<Application> app = m_ueNode->GetApplication(appid);
+    auto socketPtrList = app->GetObject<PacketSink>()->GetAcceptedSockets();
+    for (auto const socket : socketPtrList)
+      {
+        Address realSockAddr;
+        socket->GetSockName(realSockAddr);
+        if (sockAddr == realSockAddr) {
+          sockInfo.sockPtr = socket->GetObject<TcpSocketBase>();
+          sockInfo.nextRxSequence = sockInfo.sockPtr->GetRxBuffer()->NextRxSequence();
+          sockInfo.sackBuffer->MirrorSackList (sockInfo.sockPtr->GetRxBuffer()->GetSackList());
+        }
+      }
+  }
+  return SockInfo ();
+}
+
+void
+MmWaveTcpRtoAvoider::SendSackInd()
+{
+
+}
 }//namespace ns3

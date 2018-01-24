@@ -48,7 +48,14 @@ public:
    * \brief Virtual Destructor
    */
   virtual ~MmWaveTcpSackBuffer ();
- 
+
+  /*
+   * \brief Mirror the contents of the provided sack list
+   * \param sackList The sacklist to mirror
+   */
+  void
+  MirrorSackList (TcpOptionSack::SackList sackList);
+  
 private:
   /**
    * \brief Update the sack list, with the block seq starting at the beginning
