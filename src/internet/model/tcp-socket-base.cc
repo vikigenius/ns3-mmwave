@@ -2498,6 +2498,91 @@ TcpSocketBase::SendEmptyPacket (uint8_t flags)
     }
 }
 
+void
+TcpSocketBase::SendCustomSack(Callback <void, TcpHeader& > sackProvider)
+{
+  NS_LOG_FUNCTION (this);
+  Ptr<Packet> p = Create<Packet> ();
+  TcpHeader header;
+  SequenceNumber32 s = m_tcb->m_nextTxSequence;
+
+  /*
+   * Add tags for each socket option.
+   * Note that currently the socket adds both IPv4 tag and IPv6 tag
+   * if both options are set. Once the packet got to layer three, only
+   * the corresponding tags will be read.
+   */
+  if (GetIpTos ())
+    {
+      SocketIpTosTag ipTosTag;
+      ipTosTag.SetTos (GetIpTos ());
+      p->AddPacketTag (ipTosTag);
+    }
+
+  if (IsManualIpv6Tclass ())
+    {
+      SocketIpv6TclassTag ipTclassTag;
+      ipTclassTag.SetTclass (GetIpv6Tclass ());
+      p->AddPacketTag (ipTclassTag);
+    }
+
+  if (IsManualIpTtl ())
+    {
+      SocketIpTtlTag ipTtlTag;
+      ipTtlTag.SetTtl (GetIpTtl ());
+      p->AddPacketTag (ipTtlTag);
+    }
+
+  if (IsManualIpv6HopLimit ())
+    {
+      SocketIpv6HopLimitTag ipHopLimitTag;
+      ipHopLimitTag.SetHopLimit (GetIpv6HopLimit ());
+      p->AddPacketTag (ipHopLimitTag);
+    }
+
+  uint8_t priority = GetPriority ();
+  if (priority)
+    {
+      SocketPriorityTag priorityTag;
+      priorityTag.SetPriority (priority);
+      p->ReplacePacketTag (priorityTag);
+    }
+
+  if (m_endPoint == 0 && m_endPoint6 == 0)
+    {
+      NS_LOG_WARN ("Failed to send empty packet due to null endpoint");
+      return;
+    }
+
+  header.SetFlags (TcpHeader::ACK);
+  header.SetSequenceNumber (s);
+  header.SetAckNumber (m_rxBuffer->NextRxSequence ());
+  if (m_endPoint != 0)
+    {
+      header.SetSourcePort (m_endPoint->GetLocalPort ());
+      header.SetDestinationPort (m_endPoint->GetPeerPort ());
+    }
+  else
+    {
+      header.SetSourcePort (m_endPoint6->GetLocalPort ());
+      header.SetDestinationPort (m_endPoint6->GetPeerPort ());
+    }
+  AddOptions (header);
+
+  sackProvider (header); //Call the sackProvider callback to add custom sack options
+  
+  if (m_endPoint != 0)
+    {
+      m_tcp->SendPacket (p, header, m_endPoint->GetLocalAddress (),
+                         m_endPoint->GetPeerAddress (), m_boundnetdevice);
+    }
+  else
+    {
+      m_tcp->SendPacket (p, header, m_endPoint6->GetLocalAddress (),
+                         m_endPoint6->GetPeerAddress (), m_boundnetdevice);
+    }
+}
+
 /* This function closes the endpoint completely. Called upon RST_TX action. */
 void
 TcpSocketBase::SendRST (void)
@@ -3871,6 +3956,12 @@ Ptr<TcpRxBuffer>
 TcpSocketBase::GetRxBuffer (void) const
 {
   return m_rxBuffer;
+}
+
+SequenceNumber32
+TcpSocketBase::GetNextTxSequence (void) const
+{
+  return m_tcb->m_nextTxSequence;
 }
 
 void

@@ -99,7 +99,8 @@ MmWaveTcpRtoAvoider::HandleRlcBuffering(std::string device, uint16_t cellId, uin
   DoDpi(packet);
   if (m_curSockInfo)
     {
-      SendSackInd();
+      //Update Sack Buffer
+      m_curSockInfo->sockPtr->SendCustomSack (MakeCallback(&MmWaveTcpRtoAvoider::BuildSackOption, this));
     }
 }
 
@@ -120,12 +121,13 @@ MmWaveTcpRtoAvoider::DoDpi(Ptr<const Packet> packet)
   if (rlcHeader.IsDataPdu()) {
     copiedPacket->RemoveHeader(pdcpHeader);
     copiedPacket->RemoveHeader(ipv4Header);
-
+    copiedPacket->RemoveHeader(tcpHeader);
+    
     //Now Check for the TCP header
-    copiedPacket->PeekHeader(tcpHeader);
     if (tcpHeader.GetDestinationPort())
       {
-        m_bufferedList.push_back(tcpHeader.GetSequenceNumber());
+        SequenceNumber32 headSeq;
+        m_bufferedList.emplace(headSeq, headSeq + copiedPacket->GetSize()); //Note that we have removed all haders upto and including TCP, so size won't include them
         //auto sockAdd = GetSockAddress(ipv4Header.GetSource() , tcpHeader.GetSourcePort());
         // Use Destination address because UE Rlc is the receiver
         auto sockAdd = GetSockAddress(ipv4Header.GetDestination() , tcpHeader.GetDestinationPort());
@@ -149,7 +151,8 @@ MmWaveTcpRtoAvoider::DoDpi(Ptr<const Packet> packet)
         m_curSockInfo.reset();
       }
 
-    // Now put back the IP and PDCP headers
+    // Now put back the TCP, IP and PDCP headers
+    copiedPacket->AddHeader(tcpHeader);
     copiedPacket->AddHeader(ipv4Header);
     copiedPacket->AddHeader(pdcpHeader);
   }
@@ -181,8 +184,46 @@ MmWaveTcpRtoAvoider::GetSocketInfo (Address sockAddr)
 }
 
 void
-MmWaveTcpRtoAvoider::SendSackInd()
+MmWaveTcpRtoAvoider::UpdateSackBuffer ()
 {
+  while (!m_bufferedList.empty())
+    {
+      auto seqPair = m_bufferedList.front();
+      if (m_curSockInfo->nextRxSequence < seqPair.first)
+        {
+          m_curSockInfo->sackBuffer->AddSackBlock(seqPair.first, seqPair.second);
+        }
+      m_bufferedList.pop();
+    }
+}
 
+void
+MmWaveTcpRtoAvoider::BuildSackOption (TcpHeader &header)
+{
+  NS_LOG_FUNCTION (this << header);
+
+  // Calculate the number of SACK blocks allowed in this packet
+  uint8_t optionLenAvail = header.GetMaxOptionLength () - header.GetOptionLength ();
+  uint8_t allowedSackBlocks = (optionLenAvail - 2) / 8;
+
+  TcpOptionSack::SackList sackList = m_curSockInfo->sackBuffer->GetSackList();
+  
+  if (allowedSackBlocks == 0 || sackList.empty ())
+    {
+      NS_LOG_LOGIC ("No space available or sack list empty, not adding sack blocks");
+      return;
+    }
+
+  // Append the allowed number of SACK blocks
+  Ptr<TcpOptionSack> option = CreateObject<TcpOptionSack> ();
+  TcpOptionSack::SackList::iterator i;
+  for (i = sackList.begin (); allowedSackBlocks > 0 && i != sackList.end (); ++i)
+    {
+      NS_LOG_LOGIC ("Left edge of the block: " << (*i).first << " Right edge of the block: " << (*i).second);
+      option->AddSackBlock (*i);
+      allowedSackBlocks--;
+    }
+
+  header.AppendOption (option);
 }
 }//namespace ns3

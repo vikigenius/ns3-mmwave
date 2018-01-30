@@ -391,6 +391,11 @@ public:
    */
   Ptr<TcpRxBuffer> GetRxBuffer (void) const;
 
+  /*
+   * \brief Get the Next Sequence Number to be transmitted 
+   */
+  SequenceNumber32 GetNextTxSequence (void) const;
+  
   /**
    * \brief Callback pointer for cWnd trace chaining
    */
@@ -468,6 +473,13 @@ public:
    * \param indSeq the Seq Number of the out of sequence packet
    */ 
   void NotifyRlcBufferIndication (SequenceNumber32 indSeq);
+
+  /*
+   * \brief Custom function for sending SACK indication
+   *
+   * \param sackProvider the callback that adds the sack options
+   */
+  void SendCustomSack (Callback <void, TcpHeader&> sackProvider);
   
   // Necessary implementations of null functions from ns3::Socket
   virtual enum SocketErrno GetErrno (void) const;    // returns m_errno

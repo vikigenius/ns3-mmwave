@@ -32,10 +32,12 @@
 #include <ns3/packet.h>
 #include <ns3/tcp-socket-base.h>
 #include <map>
+#include <queue>
 #include <memory>
 #include <ns3/ptr.h>
 #include <ns3/node.h>
 #include <ns3/application.h>
+#include <ns3/tcp-header.h>
 
 namespace ns3 {
 
@@ -99,10 +101,21 @@ private:
    * \return the socket information
    */
   SockInfo UpdateSockInfo (SockInfo sockInfo);
-  
-  void SendSackInd ();
 
-  std::list<SequenceNumber32> m_bufferedList;
+  /*
+   * \brief Updates the Sack Buffer using lower layer packet after DPI
+   * WARNING: This function is valid only after after DPI is done
+   */
+  void UpdateSackBuffer (void);
+  
+  /*
+   * \brief Builds the sack option into the tcp header of a packet
+   *
+   * \param header reference to TcpHeader of packet to be sent as SACK
+   */
+  void BuildSackOption (TcpHeader &header);
+  
+  std::queue<std::pair<SequenceNumber32, SequenceNumber32>> m_bufferedList;
   Ptr<Node> m_ueNode;
   SocketMap m_sockInfoMap;
   std::shared_ptr<SockInfo> m_curSockInfo;

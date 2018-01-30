@@ -50,11 +50,19 @@ public:
   virtual ~MmWaveTcpSackBuffer ();
 
   /*
+   * \brief Get the Sack List
+   * \return The Sack List
+   */
+  TcpOptionSack::SackList GetSackList (void) const;
+  
+  /*
    * \brief Mirror the contents of the provided sack list
    * \param sackList The sacklist to mirror
    */
   void
   MirrorSackList (TcpOptionSack::SackList sackList);
+
+  void AddSackBlock (const SequenceNumber32 &head, const SequenceNumber32 &tail);
   
 private:
   /**

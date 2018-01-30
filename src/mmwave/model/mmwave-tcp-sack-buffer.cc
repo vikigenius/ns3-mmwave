@@ -52,6 +52,12 @@ MmWaveTcpSackBuffer::~MmWaveTcpSackBuffer ()
   NS_LOG_FUNCTION (this);
 }
 
+TcpOptionSack::SackList
+MmWaveTcpSackBuffer::GetSackList() const
+{
+  return m_sackList;
+}
+
 void
 MmWaveTcpSackBuffer::MirrorSackList(TcpOptionSack::SackList sackList)
 {
@@ -59,9 +65,73 @@ MmWaveTcpSackBuffer::MirrorSackList(TcpOptionSack::SackList sackList)
 }
 
 void
+MmWaveTcpSackBuffer::AddSackBlock(const ns3::SequenceNumber32 &head, const ns3::SequenceNumber32 &tail)
+{
+  UpdateSackList(head, tail);
+}
+
+void
 MmWaveTcpSackBuffer::UpdateSackList (const SequenceNumber32 &head, const SequenceNumber32 &tail)
 {
+  NS_LOG_FUNCTION (this << head << tail);
+  TcpOptionSack::SackBlock current;
+  current.first = head;
+  current.second = tail;
 
+  m_sackList.push_front(current);
+
+  // We have inserted the block at the beginning of the list. Now, we should
+  // check if any existing blocks overlap with that.
+  bool updated = false;
+  TcpOptionSack::SackList::iterator it = m_sackList.begin ();
+  TcpOptionSack::SackBlock begin = *it;
+  TcpOptionSack::SackBlock merged;
+  ++it;
+
+  // Iterates until we examined all blocks in the list (maximum 4)
+  while (it != m_sackList.end ())
+    {
+      current = *it;
+
+      // This is a left merge:
+      // [current_first; current_second] [beg_first; beg_second]
+      if (begin.first == current.second)
+        {
+          NS_ASSERT (current.first < begin.second);
+          merged = TcpOptionSack::SackBlock (current.first, begin.second);
+          updated = true;
+        }
+      // while this is a right merge
+      // [begin_first; begin_second] [current_first; current_second]
+      else if (begin.second == current.first)
+        {
+          NS_ASSERT (begin.first < current.second);
+          merged = TcpOptionSack::SackBlock (begin.first, current.second);
+          updated = true;
+        }
+
+      // If we have merged the blocks (and the result is in merged) we should
+      // delete the current block (it), the first block, and insert the merged
+      // one at the beginning.
+      if (updated)
+        {
+          m_sackList.erase (it);
+          m_sackList.pop_front ();
+          m_sackList.push_front (merged);
+          it = m_sackList.begin ();
+          begin = *it;
+          updated = false;
+        }
+
+      ++it;
+    }
+
+  // Since the maximum blocks that fits into a TCP header are 4, there's no
+  // point on maintaining the others.
+  if (m_sackList.size () > 4)
+    {
+      m_sackList.pop_back ();
+    }
 }
 
 void
