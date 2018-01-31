@@ -181,7 +181,7 @@ MmWaveTcpRtoAvoider::GetSocketInfo (Address sockAddr)
         }
       }
   }
-  return SockInfo ();
+  return sockInfo;
 }
 
 void
