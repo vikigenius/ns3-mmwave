@@ -100,6 +100,7 @@ MmWaveTcpRtoAvoider::HandleRlcBuffering(std::string device, uint16_t cellId, uin
   if (m_curSockInfo)
     {
       //Update Sack Buffer
+      UpdateSackBuffer();
       m_curSockInfo->sockPtr->SendCustomSack (MakeCallback(&MmWaveTcpRtoAvoider::BuildSackOption, this));
     }
 }
