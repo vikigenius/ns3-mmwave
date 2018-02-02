@@ -56,6 +56,15 @@ MmWaveTcpRtoAvoider::SockInfo
   Ptr<TcpSocketBase> sockPtr;
   SequenceNumber32 nextRxSequence;
   Ptr<MmWaveTcpSackBuffer> sackBuffer;
+  struct PduBuffer
+  {
+    std::list<Ptr<Packet>> byteSegments;
+    bool isComplete;
+    uint32_t currSize;
+    uint32_t totalSize;
+  };
+  PduBuffer pduBuffer;
+  bool isBuffered;
 };
 
 MmWaveTcpRtoAvoider::MmWaveTcpRtoAvoider (Ptr<Node> ueNode)

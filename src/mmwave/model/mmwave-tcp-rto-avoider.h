@@ -78,6 +78,7 @@ public:
  
 private:
   struct SockInfo;
+  struct PduBuffer;
   typedef std::map <Address, std::shared_ptr<SockInfo>> SocketMap; 
   
   /**
