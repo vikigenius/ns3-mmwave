@@ -36,6 +36,7 @@
 #include <ns3/application.h>
 #include <ns3/address.h>
 #include <ns3/inet-socket-address.h>
+#include <map>
 
 namespace ns3 {
 
@@ -63,7 +64,8 @@ MmWaveTcpRtoAvoider::SockInfo
     uint32_t currSize;
     uint32_t totalSize;
   };
-  PduBuffer pduBuffer;
+  typedef std::map<SequenceNumber32, PduBuffer> PacketBuffer;
+  PacketBuffer packetBuffer;
   bool isBuffered;
 };
 
@@ -131,13 +133,13 @@ MmWaveTcpRtoAvoider::DoDpi(Ptr<const Packet> packet)
   if (rlcHeader.IsDataPdu()) {
     copiedPacket->RemoveHeader(pdcpHeader);
     copiedPacket->RemoveHeader(ipv4Header);
+    uint32_t actualPayloadSize = copiedPacket->GetSize();
     copiedPacket->RemoveHeader(tcpHeader);
     
     //Now Check for the TCP header
     if (tcpHeader.GetDestinationPort())
       {
         SequenceNumber32 headSeq = tcpHeader.GetSequenceNumber();
-        m_bufferedList.emplace(headSeq, headSeq + copiedPacket->GetSize()); //Note that we have removed all haders upto and including TCP, so size won't include them
         //auto sockAdd = GetSockAddress(ipv4Header.GetSource() , tcpHeader.GetSourcePort());
         // Use Destination address because UE Rlc is the receiver
         auto sockAdd = GetSockAddress(ipv4Header.GetDestination() , tcpHeader.GetDestinationPort());
@@ -154,6 +156,14 @@ MmWaveTcpRtoAvoider::DoDpi(Ptr<const Packet> packet)
           {
             m_curSockInfo = std::make_shared<SockInfo>(GetSocketInfo(sockAdd));
             m_sockInfoMap[sockAdd] = m_curSockInfo;
+          }
+        if (ipv4Header.GetPayloadSize() > actualPayloadSize)
+          {
+            ;
+          }
+        else
+          {
+            m_bufferedList.emplace(headSeq, headSeq + copiedPacket->GetSize()); //Note that we have removed all haders upto and including TCP, so size won't include them
           }
       }
     else
